@@ -18,13 +18,22 @@ let
     export __VK_LAYER_NV_optimus=NVIDIA_only
     exec "$@"
   '';
+  check-root-permissions = pkgs.writeShellScriptBin "check-root-permissions" ''
+    if [ "$EUID" -ne 0 ]
+      then printf "\033[31m[%s]\033[0m %s\n" "permission denied"
+      exit 1
+    fi
+  '';
   nixcfg-switch = pkgs.writeShellScriptBin "nixcfg-switch" ''
+    check-root-permissions || exit
     pushd /home/hofsiedge/.nixos-config/
     nixos-rebuild switch -I nixos-config=./configuration.nix "$@"
     popd
   '';
-  nixcfg-boot = pkgs.writeShellScriptBin "nixcfg-boot" ''
+  nixcfg-clean = pkgs.writeShellScriptBin "nixcfg-clean" ''
+    check-root-permissions || exit
     pushd /home/hofsiedge/.nixos-config/
+    nix-collect-garbage -d
     nixos-rebuild boot -I nixos-config=./configuration.nix "$@"
     popd
   '';
@@ -186,7 +195,7 @@ in
       firefox surf ungoogled-chromium thunderbird
       tdesktop discord
       # media
-      krita blender mpv inkscape obs-studio godot kdenlive
+      krita blender mpv inkscape obs-studio godot kdenlive kicad-small
       # sound & display controls
       pavucontrol pulseaudio brightnessctl
 
@@ -304,8 +313,9 @@ in
   environment = {
     systemPackages = with pkgs; [
         nvidia-offload
+        check-root-permissions
         nixcfg-switch
-        nixcfg-boot
+        nixcfg-clean
         virt-manager
     ];
     variables = {

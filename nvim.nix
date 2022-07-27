@@ -39,7 +39,7 @@ let
         map('n', '<leader>a', '<Plug>(EasyAlign)', {})
       '';
     };
-    nvimTreeBundle = [ {
+    nvimTreeBundle = [{
       plugin = nvim-tree-lua;
       config = luaCfg ''
         -- TODO: git
@@ -56,43 +56,55 @@ let
         }
       '';
     }
-    nvim-web-devicons
-    ];
+      nvim-web-devicons];
     hop = {
       plugin = hop-nvim;
       config = luaCfg ''
         require'hop'.setup{}
-        vim.api.nvim_set_keymap("n", '<leader> w', "<cmd>:HopWord<cr>", {})
-        vim.api.nvim_set_keymap("n", '<leader> c', "<cmd>:HopChar1<cr>", {})
-        vim.api.nvim_set_keymap("n", '<leader> /', "<cmd>:HopPattern<cr>", {})
+        vim.api.nvim_set_keymap("n", '<leader> w', "<cmd>HopWord<cr>", {})
+        vim.api.nvim_set_keymap("n", '<leader> c', "<cmd>HopChar1<cr>", {})
+        vim.api.nvim_set_keymap("n", '<leader> /', "<cmd>HopPattern<cr>", {})
       '';
     };
+    telescopeBundle = [
+      plenary-nvim
+      {
+        plugin = telescope-nvim;
+        config = luaCfg ''
+          vim.api.nvim_set_keymap("n", '<leader>ff', '<cmd>Telescope find_files<cr>', {})
+          vim.api.nvim_set_keymap("n", '<leader>fg', '<cmd>Telescope live_grep<cr>', {})
+          vim.api.nvim_set_keymap("n", '<leader>fb', '<cmd>Telescope buffers<cr>', {})
+          vim.api.nvim_set_keymap("n", '<leader>fh', '<cmd>Telescope help_tags<cr>', {})
+        '';
+      }
+    ];
   };
 
   code = with pkgs.vimPlugins; rec {
     lspConfig = {
       plugin = nvim-lspconfig;
-      config = let
-        mappings = {
-          gD = "declaration";
-          gd = "definition";
-          gi = "implementation";
-          gr = "references";
-          K  = "hover";
-          "<C-k>" = "signature_help";
-          "<leader>D" = "type_definition";
-          "<leader>rn" = "rename";
-          "<leader>ca" = "code_action";
-          "<leader>f" = "formatting";
-        };
-        nvimKeymap = {k, v}: "vim.api.nvim_buf_set_keymap(bufnr, 'n', '" + k
-          + "', '<cmd>lua vim.lsp.buf." + v + "()<CR>', opts)";
-        keymaps = builtins.map (k: nvimKeymap {k=k; v=builtins.getAttr k mappings;})
-          (builtins.attrNames mappings);
-        onAttach = ''
-          local on_attach = function(client, bufnr)
-            vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-        '' + (builtins.concatStringsSep "\n" keymaps) + ''
+      config =
+        let
+          mappings = {
+            gD = "declaration";
+            gd = "definition";
+            gi = "implementation";
+            gr = "references";
+            K = "hover";
+            "<C-k>" = "signature_help";
+            "<leader>D" = "type_definition";
+            "<leader>rn" = "rename";
+            "<leader>ca" = "code_action";
+            "<leader>f" = "formatting";
+          };
+          nvimKeymap = { k, v }: "vim.api.nvim_buf_set_keymap(bufnr, 'n', '" + k
+            + "', '<cmd>lua vim.lsp.buf." + v + "()<CR>', opts)";
+          keymaps = builtins.map (k: nvimKeymap { k = k; v = builtins.getAttr k mappings; })
+            (builtins.attrNames mappings);
+          onAttach = ''
+            local on_attach = function(client, bufnr)
+              vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
+          '' + (builtins.concatStringsSep "\n" keymaps) + ''
 
           end
         '';
@@ -106,14 +118,14 @@ let
           vim.api.nvim_set_keymap('n', '<leader>q', '<cmd>lua vim.diagnostic.setloclist()<CR>', opts)
         '' + onAttach + ''
           -- local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
-          for _, ls in ipairs{'gopls', 'tsserver', 'rnix', 'zls', 'tailwindcss'} do
+          for _, ls in ipairs{'gopls', 'tsserver', 'rnix', 'zls', 'tailwindcss', 'nimls'} do
             if nvim_lsp[ls] ~= nil then
               nvim_lsp[ls].setup{
                 on_attach = on_attach
               }
             end
           end
-      '');
+        '');
     };
     _luaSnip = {
       plugin = luasnip;
@@ -174,11 +186,14 @@ let
         local conds = require("luasnip.extras.expand_conditions")
         
         
-        vim.api.nvim_create_autocmd(
-          { "BufWritePre" },
-          { pattern = { "*.go" },
-            callback = vim.lsp.buf.formatting_sync }
-        )
+        vim.api.nvim_create_autocmd({"BufWritePre"}, {
+            pattern = { "*.go" },
+            callback = vim.lsp.buf.formatting_sync
+        })
+        vim.api.nvim_create_autocmd({ "BufEnter" }, {
+            pattern = {"*.nim"},
+            command = "set ft=nim"
+        })
         
         ls.add_snippets('go', {
           s('tt', fmt("// {} {}\ntype {} {} {{\n\t{}\n}}\n\n", {rep(1), i(0, 'TODO: description'), i(1, 'name'), c(2, {t('struct'), t('interface')}), i(3, 'body')})),
@@ -245,11 +260,15 @@ let
       '';
     };
     cmpBundle = [
-      lspkind-nvim cmp-buffer cmp-nvim-lsp cmp-path cmp_luasnip
+      lspkind-nvim
+      cmp-buffer
+      cmp-nvim-lsp
+      cmp-path
+      cmp_luasnip
       _nvimCmp
       _luaSnip
     ];
-    
+
     _nvimDap = {
       plugin = nvim-dap;
       config = ''
@@ -268,8 +287,8 @@ let
         name = "dap-go";
         src = pkgs.fetchFromGitHub {
           owner = "leoluz";
-          repo  = "nvim-dap-go";
-          rev   = "fca8bf90bf017e8ecb3a3fb8c3a3c05b60d1406d";
+          repo = "nvim-dap-go";
+          rev = "fca8bf90bf017e8ecb3a3fb8c3a3c05b60d1406d";
           sha256 = "ZbQw4244BLiSoBipiPc1eEF2aV3BJLT7W8LmBl8xH4Q=";
         };
       };
@@ -294,13 +313,26 @@ let
     };
     dapBundle = [ _nvimDap _nvimDapGo _nvimDapUi _nvimDapVT ];
     treeSitter = {
-      plugin = nvim-treesitter.withPlugins(plugins: with pkgs.tree-sitter-grammars; [
-        tree-sitter-go tree-sitter-gomod # tree-sitter-gowork
-        tree-sitter-html tree-sitter-json5 tree-sitter-lua tree-sitter-make
-        tree-sitter-nix tree-sitter-markdown tree-sitter-dockerfile
-        tree-sitter-c tree-sitter-cpp tree-sitter-css tree-sitter-javascript
-        tree-sitter-latex tree-sitter-tsx tree-sitter-typescript tree-sitter-yaml
+      plugin = nvim-treesitter.withPlugins (plugins: with pkgs.tree-sitter-grammars; [
+        tree-sitter-go
+        tree-sitter-gomod # tree-sitter-gowork
+        tree-sitter-html
+        tree-sitter-json5
+        tree-sitter-lua
+        tree-sitter-make
+        tree-sitter-nix
+        tree-sitter-markdown
+        tree-sitter-dockerfile
+        tree-sitter-c
+        tree-sitter-cpp
+        tree-sitter-css
+        tree-sitter-javascript
+        tree-sitter-latex
+        tree-sitter-tsx
+        tree-sitter-typescript
+        tree-sitter-yaml
         tree-sitter-zig
+        tree-sitter-scheme
       ]);
       config = (luaCfg ''
         require'nvim-treesitter.configs'.setup {
@@ -327,12 +359,13 @@ let
     hexokinase = { plugin = vim-hexokinase; };
   };
 
-in {
-  enable      = true;
-  vimAlias    = true;
-  withRuby    = false;
+in
+{
+  enable = true;
+  vimAlias = true;
+  withRuby = false;
   withPython3 = false;
-  plugins     = [
+  plugins = [
     themes.codedark
     utils.easyAlign
     utils.hop
@@ -340,10 +373,14 @@ in {
     code.treeSitter
     code.hexokinase
   ] ++ utils.nvimTreeBundle
-    ++ code.cmpBundle
-    ++ code.dapBundle;
+  ++ code.cmpBundle
+  ++ code.dapBundle
+  ++ utils.telescopeBundle;
   extraPackages = with pkgs; [
     gopls
+    # telescope dependencies
+    ripgrep
+    fd
   ];
   extraConfig = ''
     nnoremap <SPACE> <Nop>

@@ -55,7 +55,7 @@ in
   # systemd-resolved - resolvconf manager (required by iwd)
   services.resolved.enable = true;
     
-  # FIXME
+  # TODO: fine tune for the new hardware
   services.xserver.videoDrivers = ["nvidia"];
   hardware.nvidia.modesetting.enable = true;
   hardware.nvidia.prime = {
@@ -92,7 +92,7 @@ in
   time.timeZone = "Asia/Chita";
 
   # Ethernet port auto config
-  networking.interfaces.enp2s0.useDHCP = true;
+  networking.interfaces.enp3s0.useDHCP = true;
   # soon to be deprecated
   networking.useDHCP = false;
 
@@ -213,7 +213,7 @@ in
       gtk-engine-murrine libadwaita gtk_engines gsettings-desktop-schemas lxappearance-gtk2  
       graphite-gtk-theme
         
-      # Nvidia stuff. FIXME
+      # Nvidia stuff. FIXME: fine tune for the new hardware
       egl-wayland
     ];
     programs.home-manager.enable = true;
@@ -351,7 +351,7 @@ in
   # this value at the release version of the first install of this system.
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
-  system.stateVersion = "21.11"; # Did you read the comment?
+  system.stateVersion = "22.05"; # Did you read the comment?
 
 }
 

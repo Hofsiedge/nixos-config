@@ -425,6 +425,7 @@ in
         autocmd FileType python          setlocal indentkeys-=:
         autocmd FileType css             setlocal tabstop=2 shiftwidth=2 expandtab
         autocmd FileType typescriptreact setlocal tabstop=2 shiftwidth=2 expandtab
+        autocmd FileType nix             setlocal tabstop=2 shiftwidth=2 expandtab
     ]]
     --[[ neovide ]]--
     g.neovide_fullscreen = true

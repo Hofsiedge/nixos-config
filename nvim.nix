@@ -385,6 +385,8 @@ in
   extraConfig = ''
     nnoremap <SPACE> <Nop>
     map <Space> <Leader>
+
+    set guifont=FiraCode\ Nerd\ Font:h16
   '' + luaCfg ''
     local cmd  = vim.cmd           -- execute Vim commands
     local exec = vim.api.nvim_exec -- execute Vimscript
@@ -426,6 +428,7 @@ in
     ]]
     --[[ neovide ]]--
     g.neovide_fullscreen = true
-    g.guifont            = 'Fira Code Nerd Font:h18'
+    -- This doesn't work for some reason
+    -- g.guifont            = "FiraCode Nerd Font:h16"
   '';
 }

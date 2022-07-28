@@ -25,16 +25,14 @@ let
     fi
   '';
   nixcfg-switch = pkgs.writeShellScriptBin "nixcfg-switch" ''
-    check-root-permissions || exit
     pushd /home/hofsiedge/.nixos-config/
-    nixos-rebuild switch -I nixos-config=./configuration.nix "$@"
+    sudo nixos-rebuild switch -I nixos-config=./configuration.nix "$@"
     popd
   '';
   nixcfg-clean = pkgs.writeShellScriptBin "nixcfg-clean" ''
-    check-root-permissions || exit
     pushd /home/hofsiedge/.nixos-config/
-    nix-collect-garbage -d
-    nixos-rebuild boot -I nixos-config=./configuration.nix "$@"
+    sudo nix-collect-garbage -d
+    sudo nixos-rebuild boot -I nixos-config=./configuration.nix "$@"
     popd
   '';
 
@@ -192,7 +190,7 @@ in
     };
     home.stateVersion = "21.11";
     home.packages = with pkgs; [ 
-      firefox surf ungoogled-chromium thunderbird
+      firefox surf ungoogled-chromium thunderbird librewolf-wayland
       tdesktop discord
       # media
       krita blender mpv inkscape obs-studio godot kdenlive kicad-small

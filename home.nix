@@ -29,6 +29,11 @@ in
         bindsym XF86AudioRaiseVolume exec "pactl set-sink-volume @DEFAULT_SINK@ +1%"
         bindsym XF86AudioLowerVolume exec "pactl set-sink-volume @DEFAULT_SINK@ -1%"
         bindsym XF86AudioMute exec "pactl set-sink-mute @DEFAULT_SINK@ toggle"
+        # Screenshot
+        bindsym Print exec grim -g "$(slurp)" /tmp/$(date +'%H:%M:%S.png')
+
+        # Password manager
+        bindsym Mod4+p exec passmenu
         # Keyboard
         input * {
           xkb_layout "us,ru"
@@ -88,6 +93,8 @@ in
       swaylock
       swayidle
       wl-clipboard
+      grim
+      slurp
       mako
       wofi
 
@@ -111,6 +118,8 @@ in
 
       # Nvidia stuff. FIXME: fine tune for the new hardware
       egl-wayland
+
+      pass-wayland
     ];
     programs.home-manager.enable = true;
     gtk = {

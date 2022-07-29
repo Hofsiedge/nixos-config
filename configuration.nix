@@ -134,6 +134,12 @@ in
   };
   programs.steam.enable = true;
 
+  # GnuPG
+  programs.gnupg.agent = {
+    enable = true;
+  };
+  services.pcscd.enable = true;
+
   nix = {
     package = pkgs.nixFlakes;
     extraOptions = ''
@@ -170,6 +176,7 @@ in
         nixcfg-switch
         nixcfg-clean
         virt-manager
+        pinentry
     ];
     variables = {
       EDITOR = "neovide --multigrid";

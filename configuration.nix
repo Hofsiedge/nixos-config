@@ -179,7 +179,7 @@ in
         pinentry
     ];
     variables = {
-      EDITOR = "neovide --multigrid";
+      EDITOR = "nvim";
       NEOVIDE_MULTIGRID = "1";
       NEOVIDE_FRAMELESS = "1";
     };

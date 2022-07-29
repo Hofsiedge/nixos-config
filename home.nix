@@ -62,7 +62,6 @@ in
     home.packages = with pkgs; [
       firefox
       surf
-      ungoogled-chromium
       thunderbird
       librewolf-wayland
       tdesktop
@@ -184,5 +183,11 @@ in
     programs.bash.bashrcExtra = ''
       export XDG_DATA_HOME="$HOME/.local/share"
     '';
+  };
+  xdg.mime = {
+    enable = true;
+    defaultApplications = {
+      "application/pdf" = "librewolf.desktop";
+    };
   };
 }

@@ -123,6 +123,7 @@ in
       # };
     };
     programs.neovim = customNeovim pkgs;
+    xdg.configFile."nvim/after".source = ./nvim/after;
     programs.helix = {
       enable = true;
       languages = [

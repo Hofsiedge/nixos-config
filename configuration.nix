@@ -2,7 +2,7 @@
 # your system.  Help is available in the configuration.nix(5) man page
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 let
   linja-sike = pkgs.callPackage ./packages/linja-sike.nix { };
@@ -30,6 +30,11 @@ let
     sudo nixos-rebuild boot -I nixos-config=./configuration.nix "$@"
     popd
   '';
+  nixcfg-edit = pkgs.writeShellScriptBin "nixcfg-edit" ''
+    pushd /home/hofsiedge/.nixos-config/
+    $EDITOR configuration.nix
+    popd
+  '';
 
 in
 {
@@ -38,7 +43,7 @@ in
     <home-manager/nixos>
     ./home.nix
   ];
-    
+
   virtualisation.libvirtd.enable = true;
   programs.dconf.enable = true;
 
@@ -48,14 +53,14 @@ in
 
   # systemd-resolved - resolvconf manager (required by iwd)
   services.resolved.enable = true;
-    
+
   # TODO: fine tune for the new hardware
-  services.xserver.videoDrivers = ["nvidia"];
+  services.xserver.videoDrivers = [ "nvidia" ];
   hardware.nvidia.modesetting.enable = true;
   hardware.nvidia.prime = {
     sync.enable = true;
     nvidiaBusId = "PCI:1:0:0";
-    intelBusId  = "PCI:0:2:0";
+    intelBusId = "PCI:0:2:0";
   };
 
   networking = {
@@ -68,18 +73,37 @@ in
         };
       };
       networks = {
-        "Shilova_46-56".PreSharedKey    = "b1c22c9e43f1a7f8684446b9a68721448b9b89cc105e569ebb144e226260aa6c";
+        "Shilova_46-56".PreSharedKey = "b1c22c9e43f1a7f8684446b9a68721448b9b89cc105e569ebb144e226260aa6c";
         "Redmi Note 9 Pro".PreSharedKey = "8774d68bcccf76b4565c832b8308c4a23b937704140ba21fa226d8f3f473057c";
       };
     };
-    firewall = {
-      allowedTCPPorts = [ 2350 3450 3000 ];
-      allowedUDPPorts = [ 2350 ];
-    };
-    extraHosts = let
-      hostsPath = https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts;
-      hostsFile = builtins.fetchurl hostsPath;
-    in builtins.readFile "${hostsFile}";
+
+    firewall =
+      let
+        reductor = attrs: args: with lib; attrsets.genAttrs attrs (name: lists.unique (with builtins; concatLists (catAttrs name args)));
+        firewallReductor = reductor [ "allowedTCPPorts" "allowedUDPPorts" "allowedTCPPortRanges" "allowedUDPPortRanges" ];
+        DS3 = {
+          allowedTCPPorts = [ 27036 27037 ];
+          allowedUDPPorts = [ 4380 27036 ];
+          allowedTCPPortRanges = [{ from = 27015; to = 27030; }];
+          allowedUDPPortRanges = [{ from = 27000; to = 27031; }];
+        };
+        TMNF = rec {
+          allowedTCPPorts = [ 2350 3450 ];
+          allowedUDPPorts = allowedTCPPorts;
+        };
+        Something = {
+          allowedTCPPorts = [ 3000 ];
+        };
+      in
+      firewallReductor [ TMNF DS3 Something ];
+
+    extraHosts =
+      let
+        hostsPath = https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts;
+        hostsFile = builtins.fetchurl hostsPath;
+      in
+      builtins.readFile "${hostsFile}";
   };
 
   # Set your time zone.
@@ -104,7 +128,7 @@ in
     alsa.support32Bit = true;
     pulse.enable = true;
   };
-  xdg.portal.wlr.enable    = true;     # enable screen sharing
+  xdg.portal.wlr.enable = true; # enable screen sharing
 
   hardware.opengl = {
     enable = true;
@@ -119,10 +143,10 @@ in
   users.mutableUsers = true;
   users.users.hofsiedge = {
     isNormalUser = true;
-    home         = "/home/hofsiedge";
-    extraGroups  = [
-      "wheel"        # Enable ‘sudo’ for the user.
-      "video"        # Brightness control
+    home = "/home/hofsiedge";
+    extraGroups = [
+      "wheel" # Enable ‘sudo’ for the user.
+      "video" # Brightness control
       "audio"
       "libvirtd"
     ];
@@ -130,7 +154,7 @@ in
 
   nixpkgs.config = {
     allowUnfree = true;
-    packageOverrides = pkgs : { };
+    packageOverrides = pkgs: { };
   };
   programs.steam.enable = true;
 
@@ -139,6 +163,8 @@ in
     enable = true;
   };
   services.pcscd.enable = true;
+  # TODO: find another solution to `org.freedesktop.secrets not provided by any service`
+  services.gnome.gnome-keyring.enable = true;
 
   nix = {
     package = pkgs.nixFlakes;
@@ -149,11 +175,11 @@ in
 
   fonts.fontDir.enable = true;
   fonts.fonts = [ linja-sike ] ++ (with pkgs; [
-      fira-code
-      dejavu_fonts
-      ipafont
-      kochi-substitute
-    ]);
+    fira-code
+    dejavu_fonts
+    ipafont
+    kochi-substitute
+  ]);
   # TODO: check
   fonts.fontconfig.defaultFonts = {
     monospace = [
@@ -171,12 +197,13 @@ in
   };
   environment = {
     systemPackages = with pkgs; [
-        nvidia-offload
-        check-root-permissions
-        nixcfg-switch
-        nixcfg-clean
-        virt-manager
-        pinentry
+      nvidia-offload
+      check-root-permissions
+      nixcfg-switch
+      nixcfg-clean
+      nixcfg-edit
+      virt-manager
+      pinentry
     ];
     variables = {
       EDITOR = "nvim";

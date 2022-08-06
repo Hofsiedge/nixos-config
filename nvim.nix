@@ -118,7 +118,16 @@ let
           vim.api.nvim_set_keymap('n', '<leader>q', '<cmd>lua vim.diagnostic.setloclist()<CR>', opts)
         '' + onAttach + ''
           -- local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
-          for _, ls in ipairs{'gopls', 'tsserver', 'rnix', 'zls', 'tailwindcss', 'nimls'} do
+          for _, ls in ipairs{
+            'gopls',
+            'tsserver',
+            'rnix',
+            'zls',
+            'tailwindcss',
+            'nimls',
+            'pyright',
+            'rls'
+          } do
             if nvim_lsp[ls] ~= nil then
               nvim_lsp[ls].setup{
                 on_attach = on_attach

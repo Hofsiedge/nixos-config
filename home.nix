@@ -80,14 +80,8 @@ in
       pulseaudio
       brightnessctl
 
-      go_1_18
-      gopls
-      delve
       rnix-lsp
       python310
-      idris2
-      julia-bin
-      clang_14
       # sway modules
       swaylock
       swayidle

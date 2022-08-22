@@ -1,5 +1,5 @@
 {
-  inputs.nixpkgs.url = "nixos/nixpkgs-unstable";
+  inputs.nixpkgs.url = "nixpkgs/nixos-unstable";
   inputs.home-manager.url = "github:nix-community/home-manager";
   
   outputs = { self, nixpkgs, ... }@attrs: {

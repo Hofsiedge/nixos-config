@@ -1,7 +1,3 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
-
 { config, pkgs, lib, home-manager, ... }:
 
 let
@@ -34,7 +30,6 @@ in
 {
   imports = [
     ./hardware-configuration.nix
-    # <home-manager/nixos>
     home-manager.nixosModule
     ./home.nix
   ];
@@ -213,6 +208,7 @@ in
       nixcfg.switch
       nixcfg.clean
       nixcfg.edit
+      nixcfg.update
       virt-manager
       pinentry-curses
     ];

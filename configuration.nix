@@ -13,28 +13,20 @@ let
     export __VK_LAYER_NV_optimus=NVIDIA_only
     exec "$@"
   '';
-  check-root-permissions = pkgs.writeShellScriptBin "check-root-permissions" ''
-    if [ "$EUID" -ne 0 ]
-      then printf "\033[31m[%s]\033[0m %s\n" "permission denied"
-      exit 1
-    fi
-  '';
-  nixcfg-switch = pkgs.writeShellScriptBin "nixcfg-switch" ''
+  nixcfgCommand = name: body: pkgs.writeShellScriptBin "nixcfg-${name}" ''
     pushd /home/hofsiedge/.nixos-config/
-    sudo nixos-rebuild switch -I nixos-config=./configuration.nix "$@"
+    ${body}
     popd
   '';
-  nixcfg-clean = pkgs.writeShellScriptBin "nixcfg-clean" ''
-    pushd /home/hofsiedge/.nixos-config/
-    sudo nix-collect-garbage -d
-    sudo nixos-rebuild boot -I nixos-config=./configuration.nix "$@"
-    popd
-  '';
-  nixcfg-edit = pkgs.writeShellScriptBin "nixcfg-edit" ''
-    pushd /home/hofsiedge/.nixos-config/
-    $EDITOR configuration.nix
-    popd
-  '';
+  nixcfg = builtins.mapAttrs nixcfgCommand {
+    switch = "sudo nixos-rebuild switch --flake .#hofsiedge \"$@\"";
+    edit = "$EDITOR configuration.nix";
+    clean = ''
+      sudo nix-collect-garbage -d
+      sudo nixos-rebuild boot --flake .#hofsiedge "$@"
+    '';
+    update = "nix flake update";
+  };
 
 in
 {
@@ -216,10 +208,9 @@ in
   environment = {
     systemPackages = with pkgs; [
       nvidia-offload
-      check-root-permissions
-      nixcfg-switch
-      nixcfg-clean
-      nixcfg-edit
+      nixcfg.switch
+      nixcfg.clean
+      nixcfg.edit
       virt-manager
       pinentry-curses
     ];

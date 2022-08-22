@@ -13,20 +13,22 @@ let
     export __VK_LAYER_NV_optimus=NVIDIA_only
     exec "$@"
   '';
-  nixcfgCommand = name: body: pkgs.writeShellScriptBin "nixcfg-${name}" ''
-    pushd /home/hofsiedge/.nixos-config/
-    ${body}
-    popd
-  '';
-  nixcfg = builtins.mapAttrs nixcfgCommand {
-    switch = "sudo nixos-rebuild switch --flake .#hofsiedge \"$@\"";
-    edit = "$EDITOR configuration.nix";
-    clean = ''
-      sudo nix-collect-garbage -d
-      sudo nixos-rebuild boot --flake .#hofsiedge "$@"
+  nixcfg =
+    let cmd = name: body: pkgs.writeShellScriptBin "nixcfg-${name}" ''
+      pushd /home/hofsiedge/.nixos-config/
+      ${body}
+      popd
     '';
-    update = "nix flake update";
-  };
+    in
+    builtins.mapAttrs cmd {
+      edit = "$EDITOR configuration.nix";
+      switch = "sudo nixos-rebuild switch --flake .#hofsiedge \"$@\"";
+      update = "nix flake update";
+      clean = ''
+        sudo nix-collect-garbage -d
+        sudo nixos-rebuild boot --flake .#hofsiedge "$@"
+      '';
+    };
 
 in
 {

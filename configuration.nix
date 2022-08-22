@@ -41,6 +41,7 @@ in
   imports = [
     ./hardware-configuration.nix
     # <home-manager/nixos>
+    home-manager.nixosModule
     ./home.nix
   ];
 
@@ -111,8 +112,10 @@ in
 
     extraHosts =
       let
-        hostsPath = "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts";
-        hostsFile = builtins.fetchurl hostsPath;
+        hostsFile = builtins.fetchurl {
+          url = "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts";
+          sha256 = "1315hvz15gx5ydkq7q55f530kfgphyawk0d3c9ss6my09m8x9gm2";
+        };
       in
       builtins.readFile "${hostsFile}";
   };

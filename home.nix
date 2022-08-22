@@ -1,8 +1,7 @@
-{ config, pkgs, ... }:
+{ config, pkgs, home-manager, ... }:
 
 let
   customNeovim = import ./nvim.nix;
-
 in
 {
   home-manager.useUserPackages = true;

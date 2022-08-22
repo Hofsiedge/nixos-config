@@ -13,7 +13,9 @@ let
   luaCfg = s: ''
     lua << EOF
     local map = vim.api.nvim_set_keymap
-  '' + s + "EOF";
+  '' + s + ''
+    EOF
+  '';
 
   themes = with pkgs.vimPlugins; {
     tender = {
@@ -61,9 +63,9 @@ let
       plugin = hop-nvim;
       config = luaCfg ''
         require'hop'.setup{}
-        vim.api.nvim_set_keymap("n", '<leader> w', "<cmd>HopWord<cr>", {})
-        vim.api.nvim_set_keymap("n", '<leader> c', "<cmd>HopChar1<cr>", {})
-        vim.api.nvim_set_keymap("n", '<leader> /', "<cmd>HopPattern<cr>", {})
+        map("n", '<leader> w', "<cmd>HopWord<cr>", {})
+        map("n", '<leader> c', "<cmd>HopChar1<cr>", {})
+        map("n", '<leader> /', "<cmd>HopPattern<cr>", {})
       '';
     };
     telescopeBundle = [
@@ -71,10 +73,10 @@ let
       {
         plugin = telescope-nvim;
         config = luaCfg ''
-          vim.api.nvim_set_keymap("n", '<leader>ff', '<cmd>Telescope find_files<cr>', {})
-          vim.api.nvim_set_keymap("n", '<leader>fg', '<cmd>Telescope live_grep<cr>', {})
-          vim.api.nvim_set_keymap("n", '<leader>fb', '<cmd>Telescope buffers<cr>', {})
-          vim.api.nvim_set_keymap("n", '<leader>fh', '<cmd>Telescope help_tags<cr>', {})
+          map("n", '<leader>ff', '<cmd>Telescope find_files<cr>', {})
+          map("n", '<leader>fg', '<cmd>Telescope live_grep<cr>', {})
+          map("n", '<leader>fb', '<cmd>Telescope buffers<cr>', {})
+          map("n", '<leader>fh', '<cmd>Telescope help_tags<cr>', {})
         '';
       }
     ];
@@ -99,7 +101,7 @@ let
           };
           nvimKeymap = { k, v }: "vim.api.nvim_buf_set_keymap(bufnr, 'n', '" + k
             + "', '<cmd>lua vim.lsp.buf." + v + "()<CR>', opts)";
-          keymaps = builtins.map (k: nvimKeymap { k = k; v = builtins.getAttr k mappings; })
+          keymaps = builtins.map (k: nvimKeymap { inherit k; v = builtins.getAttr k mappings; })
             (builtins.attrNames mappings);
           onAttach = ''
             local on_attach = function(client, bufnr)
@@ -112,21 +114,22 @@ let
         luaCfg (''
           local nvim_lsp = require('lspconfig')
           local opts = { noremap=true, silent=true }
-          vim.api.nvim_set_keymap('n', '<leader>e', '<cmd>lua vim.diagnostic.open_float()<CR>', opts)
-          vim.api.nvim_set_keymap('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
-          vim.api.nvim_set_keymap('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<CR>', opts)
-          vim.api.nvim_set_keymap('n', '<leader>q', '<cmd>lua vim.diagnostic.setloclist()<CR>', opts)
+          map('n', '<leader>e', '<cmd>lua vim.diagnostic.open_float()<CR>', opts)
+          map('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
+          map('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<CR>', opts)
+          map('n', '<leader>q', '<cmd>lua vim.diagnostic.setloclist()<CR>', opts)
         '' + onAttach + ''
           -- local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
           for _, ls in ipairs{
             'gopls',
-            'tsserver',
             'rnix',
-            'zls',
+            'tsserver',
             'tailwindcss',
+            'astro',
             'nimls',
             'pyright',
-            'rls'
+            'rls',
+            'zls'
           } do
             if nvim_lsp[ls] ~= nil then
               nvim_lsp[ls].setup{
@@ -135,6 +138,18 @@ let
             end
           end
         '');
+    };
+    # TODO: depends on plenary-nvim. Add dependency resolution system
+    # works fine at the moment due to Telescope depending on plenary as well
+    null-ls = {
+      plugin = null-ls-nvim;
+      config = luaCfg ''
+        require("null-ls").setup({
+          sources = {
+            require("null-ls").builtins.diagnostics.statix,
+          },
+        })
+      '';
     };
     _luaSnip = {
       plugin = luasnip;
@@ -311,7 +326,7 @@ let
       config = luaCfg ''
         require'dapui'.setup()
         local opts = { noremap=true, silent=true }
-        vim.api.nvim_set_keymap('n', '<leader>di', '<cmd>lua require"dapui".toggle()<CR>', opts)
+        map('n', '<leader>di', '<cmd>lua require"dapui".toggle()<CR>', opts)
       '';
     };
     _nvimDapVT = {
@@ -343,6 +358,15 @@ let
         tree-sitter-zig
         tree-sitter-scheme
         tree-sitter-query
+        # pkgs.vimUtils.buildVimPlugin {
+        #   name = "tree-sitter-astro";
+        #   src = pkgs.fetchFromGitHub {
+        #     owner = "virchau13";
+        #     repo = "tree-sitter-astro";
+        #     rev = "ec0f9f945a08372952403f736a1f783d1679b0ac";
+        #     sha256 = "AAA";
+        #   };
+        # }
       ]);
       config = (luaCfg ''
         require'nvim-treesitter.configs'.setup {
@@ -405,6 +429,7 @@ in
     utils.easyAlign
     utils.hop
     code.lspConfig
+    code.null-ls
     code.treeSitter
     code.treeSitterPlayground
     code.hexokinase
@@ -462,6 +487,8 @@ in
         autocmd FileType css             setlocal tabstop=2 shiftwidth=2 expandtab
         autocmd FileType typescriptreact setlocal tabstop=2 shiftwidth=2 expandtab
         autocmd FileType nix             setlocal tabstop=2 shiftwidth=2 expandtab
+
+        autocmd BufNewFile,BufRead *.astro set filetype=astro
     ]]
     --[[ neovide ]]--
     g.neovide_fullscreen = true

@@ -63,6 +63,14 @@ in
     intelBusId = "PCI:0:2:0";
   };
 
+  services.openvpn.servers = {
+    client = {
+      config = '' config /home/hofsiedge/Projects/VPN/client.conf '';
+      # up = "echo nameserver $nameserver | ${pkgs.openresolv}/sbin/resolvconf -m 0 -a $dev";
+      # down = "${pkgs.openresolv}/sbin/resolvconf -d $dev";
+    };
+  };
+
   networking = {
     wireless = {
       iwd = {
@@ -95,12 +103,15 @@ in
         Something = {
           allowedTCPPorts = [ 3000 ];
         };
+        VPN = {
+          allowedUDPPorts = [ 53 1194 ];
+        };
       in
-      firewallReductor [ TMNF DS3 Something ];
+      firewallReductor [ TMNF DS3 Something VPN ];
 
     extraHosts =
       let
-        hostsPath = https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts;
+        hostsPath = "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts";
         hostsFile = builtins.fetchurl hostsPath;
       in
       builtins.readFile "${hostsFile}";
@@ -154,7 +165,11 @@ in
 
   nixpkgs.config = {
     allowUnfree = true;
-    packageOverrides = pkgs: { };
+    packageOverrides = pkgs: {
+      nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
+        inherit pkgs;
+      };
+    };
   };
   programs.steam.enable = true;
 
@@ -203,7 +218,7 @@ in
       nixcfg-clean
       nixcfg-edit
       virt-manager
-      pinentry
+      pinentry-curses
     ];
     variables = {
       EDITOR = "nvim";

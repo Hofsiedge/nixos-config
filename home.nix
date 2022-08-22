@@ -56,12 +56,16 @@ in
         # TODO
         input 1386:222:Wacom_Bamboo_16FG_4x5_Pen {
         }
+
+        # HDMI workspace 9
+        workspace 9 output HDMI-A-1
       '';
     };
     home.stateVersion = "22.05";
     home.packages = with pkgs; [
       firefox
       surf
+      luakit
       thunderbird
       librewolf-wayland
       tdesktop
@@ -82,6 +86,8 @@ in
 
       rnix-lsp
       python310
+      statix
+
       # sway modules
       swaylock
       swayidle

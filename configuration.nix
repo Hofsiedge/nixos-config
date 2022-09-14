@@ -19,7 +19,7 @@ let
     builtins.mapAttrs cmd {
       edit = "$EDITOR configuration.nix";
       switch = "sudo nixos-rebuild switch --flake .#hofsiedge \"$@\"";
-      update = "nix flake update";
+      update = "sudo nix flake update";
       clean = ''
         sudo nix-collect-garbage -d
         sudo nixos-rebuild boot --flake .#hofsiedge "$@"
@@ -54,11 +54,17 @@ in
   };
 
   services.openvpn.servers = {
-    client = {
-      config = '' config /home/hofsiedge/Projects/VPN/client.conf '';
-      # up = "echo nameserver $nameserver | ${pkgs.openresolv}/sbin/resolvconf -m 0 -a $dev";
-      # down = "${pkgs.openresolv}/sbin/resolvconf -d $dev";
-    };
+    client =
+      let chdef = cmd: ip: "sudo ip route ${cmd} default via ${ip}";
+      in
+      {
+        config = '' config /home/hofsiedge/Projects/VPN/client.conf '';
+        # up = ''${chdef "del" "192.168.1.1"} && ${chdef "add" "10.8.0.1"}'';
+        # down = ''${chdef "del" "10.8.0.1"} && ${chdef "add" "192.168.1.1"}'';
+
+        # up = "echo nameserver $nameserver | ${pkgs.openresolv}/sbin/resolvconf -m 0 -a $dev";
+        # down = "${pkgs.openresolv}/sbin/resolvconf -d $dev";
+      };
   };
 
   networking = {
@@ -78,7 +84,7 @@ in
 
     firewall =
       let
-        reductor = attrs: args: with lib; attrsets.genAttrs attrs (name: lists.unique (with builtins; concatLists (catAttrs name args)));
+        reductor = attrs: args: with lib; with builtins; attrsets.genAttrs attrs (name: lists.unique (concatLists (catAttrs name args)));
         firewallReductor = reductor [ "allowedTCPPorts" "allowedUDPPorts" "allowedTCPPortRanges" "allowedUDPPortRanges" ];
         DS3 = {
           allowedTCPPorts = [ 27036 27037 ];
@@ -93,11 +99,14 @@ in
         Something = {
           allowedTCPPorts = [ 3000 ];
         };
+        Prometheus = {
+          allowedTCPPorts = [ 9090 ];
+        };
         VPN = {
           allowedUDPPorts = [ 53 1194 ];
         };
       in
-      firewallReductor [ TMNF DS3 Something VPN ];
+      firewallReductor [ TMNF DS3 Something VPN Prometheus ];
 
     extraHosts =
       let
@@ -205,13 +214,9 @@ in
   environment = {
     systemPackages = with pkgs; [
       nvidia-offload
-      nixcfg.switch
-      nixcfg.clean
-      nixcfg.edit
-      nixcfg.update
       virt-manager
       pinentry-curses
-    ];
+    ] ++ builtins.attrValues nixcfg;
     variables = {
       EDITOR = "nvim";
       NEOVIDE_MULTIGRID = "1";
@@ -246,6 +251,4 @@ in
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "22.05"; # Did you read the comment?
-
 }
-

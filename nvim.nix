@@ -1,19 +1,10 @@
 pkgs:
 
 let
-  # commonLets = {
-  #   ".*^map\(.*" = "let map = vim.api.nvim_set_keymap";
-  # };
-  # luaCfg = s: ''
-  #   lua << EOF
-  # '' + (map (k: ) commonLets)) + s + ''
-  # EOF
-  # '';
-
   luaCfg = s: ''
     lua << EOF
     local map = vim.api.nvim_set_keymap
-  '' + s + ''
+    ${s}
     EOF
   '';
 
@@ -46,16 +37,7 @@ let
       config = luaCfg ''
         -- TODO: git
         map('n', '<C-n>', ':NvimTreeToggle<CR>', {noremap = true, silent = true})
-        require'nvim-tree'.setup{
-        --[[
-          renderer.icons.glyphs = {
-            folder = {
-              default = '▸',
-              open    = '▾'
-            }
-          }
-        ]]--
-        }
+        require'nvim-tree'.setup{}
       '';
     }
       nvim-web-devicons];
@@ -99,25 +81,25 @@ let
             "<leader>ca" = "code_action";
             "<leader>f" = "formatting";
           };
-          nvimKeymap = { k, v }: "vim.api.nvim_buf_set_keymap(bufnr, 'n', '" + k
-            + "', '<cmd>lua vim.lsp.buf." + v + "()<CR>', opts)";
-          keymaps = builtins.map (k: nvimKeymap { inherit k; v = builtins.getAttr k mappings; })
+          nvimKeymap = { k, v }: "vim.api.nvim_buf_set_keymap(bufnr, 'n', '${k}'," +
+            " '<cmd>lua vim.lsp.buf.${v}()<CR>', opts)";
+          keymaps = builtins.map
+            (k: nvimKeymap { inherit k; v = builtins.getAttr k mappings; })
             (builtins.attrNames mappings);
           onAttach = ''
             local on_attach = function(client, bufnr)
               vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-          '' + (builtins.concatStringsSep "\n" keymaps) + ''
-
-          end
-        '';
+              ${builtins.concatStringsSep "\n" keymaps}
+            end
+          '';
         in
         luaCfg (''
           local nvim_lsp = require('lspconfig')
-          local opts = { noremap=true, silent=true }
-          map('n', '<leader>e', '<cmd>lua vim.diagnostic.open_float()<CR>', opts)
-          map('n', '[d', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
-          map('n', ']d', '<cmd>lua vim.diagnostic.goto_next()<CR>', opts)
-          map('n', '<leader>q', '<cmd>lua vim.diagnostic.setloclist()<CR>', opts)
+          local opts = { silent=true }
+          vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, opts)
+          vim.keymap.set('n', '[d',        vim.diagnostic.goto_prev,  opts)
+          vim.keymap.set('n', ']d',        vim.diagnostic.goto_next,  opts)
+          vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, opts)
         '' + onAttach + ''
           -- local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
           for _, ls in ipairs{
@@ -136,6 +118,54 @@ let
                 on_attach = on_attach
               }
             end
+          end
+          if (nvim_lsp['idris2_lsp'] ~= nil) and (vim.fn.executable('idris2') == 1) then
+            require('idris2').setup({
+              client = {
+                hover = {
+                  use_split         = false,    -- Persistent split instead of popups for hover
+                  split_size        = '30%',    -- Size of persistent split, if used
+                  auto_resize_split = false,    -- Should resize split to use minimum space
+                  split_position    = 'bottom', -- bottom, top, left or right
+                  with_history      = false,    -- Show history of hovers instead of only last
+                },
+              },
+              server = {
+                on_attach = function(...)
+                  vim.keymap.set('n', 'gd', vim.lsp.buf.definition, {silent=true})
+                  vim.keymap.set('n', 'K',  vim.lsp.buf.hover,      {silent=true})
+
+                  local ca = require('idris2.code_action')
+                  vim.keymap.set('n', '<leader>is', ca.case_split, {silent=true})
+                  vim.keymap.set('n', '<leader>ia', ca.add_clause, {silent=true})
+                  vim.keymap.set('n', '<leader>ie', ca.expr_search)
+                  vim.keymap.set('n', '<leader>id', ca.generate_def)
+                  vim.keymap.set('n', '<leader>ir', ca.refine_hole)
+                  vim.keymap.set('n', '<leader>mc', ca.make_case)
+                  vim.keymap.set('n', '<leader>mw', ca.make_with)
+                  vim.keymap.set('n', '<leader>ml', ca.make_lemma)
+
+                  local hover = require('idris2.hover')
+                  vim.keymap.set('n', '<leader>so', hover.open_split,  {silent=true})
+                  vim.keymap.set('n', '<leader>sc', hover.close_split, {silent=true})
+
+                  local metavars = require('idris2.metavars')
+                  vim.keymap.set('n', '<leader>mm', metavars.request_all, {silent=true})
+                  vim.keymap.set('n', '<leader>mn', metavars.goto_next,   {silent=true})
+                  vim.keymap.set('n', '<leader>mp', metavars.goto_prev,   {silent=true})
+
+                  vim.keymap.set('n', '<leader>x',  require('idris2.repl').evaluate)
+                  vim.keymap.set('n', '<leader>ib', require('idris2.browse').browse)
+                end,
+                init_options = {
+                  logFile = "~/.cache/idris2-lsp/server.log",
+                  longActionTimeout = 2000, -- 2 second
+                },
+              },
+              autostart_semantic             = true,      -- Should start and refresh semantic highlight automatically
+              code_action_post_hook          = function (...) vim.cmd('silent write') end, -- Function to execute after a code action is performed:
+              use_default_semantic_hl_groups = true,      -- Set default highlight groups for semantic tokens
+            })
           end
         '');
     };
@@ -220,12 +250,13 @@ let
         })
         
         ls.add_snippets('go', {
-          s('tt', fmt("// {} {}\ntype {} {} {{\n\t{}\n}}\n\n", {rep(1), i(0, 'TODO: description'), i(1, 'name'), c(2, {t('struct'), t('interface')}), i(3, 'body')})),
+          s('tt', fmt("// {} {}\ntype {} {} {{\n\t{}\n}}\n\n",
+            {rep(1), i(0, 'TODO: description'), i(1, 'name'), c(2, {t('struct'), t('interface')}), i(3, 'body')})),
           -- TODO: for, function, test, if err, return default, log, embed, struct tags, HTTP handler, etc
         })
         
         ls.add_snippets('nix', {
-          s('req', fmt("local {} = require('{}')", { i(1, 'default'), rep(1)})),
+          s('req', fmt("local {} = require('{}')", {i(1, 'default'), rep(1)})),
         })
       '';
     };
@@ -292,18 +323,42 @@ let
       _nvimCmp
       _luaSnip
     ];
+    idris2-nvim = [
+      {
+        plugin = pkgs.vimUtils.buildVimPlugin {
+          name = "idris2-nvim";
+          src = pkgs.fetchFromGitHub {
+            owner = "ShinKage";
+            repo = "idris2-nvim";
+            rev = "dc211b56157d9ecf5edfdf3c8d7e98d17a86911b";
+            sha256 = "9HVuWGpiQba2R8u4NEbGWwJTTrpvYXFnNTJRp+FY9ko=";
+          };
+        };
+        config = luaCfg ''
+        '';
+      }
+      pkgs.vimPlugins.nui-nvim
+    ];
 
     _nvimDap = {
       plugin = nvim-dap;
-      config = ''
-        nnoremap <silent> <F5>       <Cmd>lua require'dap'.continue()<CR>
-        nnoremap <silent> <F10>      <Cmd>lua require'dap'.step_over()<CR>
-        nnoremap <silent> <F11>      <Cmd>lua require'dap'.step_into()<CR>
-        nnoremap <silent> <F12>      <Cmd>lua require'dap'.step_out()<CR>
-        nnoremap <silent> <Leader>db <Cmd>lua require'dap'.toggle_breakpoint()<CR>
-        nnoremap <silent> <Leader>dB <Cmd>lua require'dap'.set_breakpoint(vim.fn.input('Breakpoint condition: '), nil, vim.fn.input('Log point message: '))<CR>
-        nnoremap <silent> <Leader>dr <Cmd>lua require'dap'.repl.open()<CR>
-        nnoremap <silent> <Leader>dl <Cmd>lua require'dap'.run_last()<CR>
+      config = luaCfg ''
+        dap = require('dap')
+        _set_bp = function ()
+          dap.set_breakpoint(
+            vim.fn.input('Breakpoint condition: '),
+            nil,
+            vim.fn.input('Log point message: ')
+          )
+        end
+        vim.keymap.set('n', '<F5>',       dap.continue,          {silent=true})
+        vim.keymap.set('n', '<F10>',      dap.step_over,         {silent=true})
+        vim.keymap.set('n', '<F11>',      dap.step_into,         {silent=true})
+        vim.keymap.set('n', '<F12>',      dap.step_out,          {silent=true})
+        vim.keymap.set('n', '<Leader>db', dap.toggle_breakpoint, {silent=true})
+        vim.keymap.set('n', '<Leader>dB', _set_bp,               {silent=true})
+        vim.keymap.set('n', '<Leader>dr', dap.repl.open,         {silent=true})
+        vim.keymap.set('n', '<Leader>dl', dap.run_last,          {silent=true})
       '';
     };
     _nvimDapGo = {
@@ -316,9 +371,9 @@ let
           sha256 = "ZbQw4244BLiSoBipiPc1eEF2aV3BJLT7W8LmBl8xH4Q=";
         };
       };
-      config = ''
-        lua require'dap-go'.setup()
-        nnoremap <silent> <leader>dt :lua require('dap-go').debug_test()<CR>
+      config = luaCfg ''
+        require'dap-go'.setup()
+        vim.keymap.set('n', '<leader>dt', require('dap-go').debug_test, {silent=true})
       '';
     };
     _nvimDapUi = {
@@ -358,6 +413,7 @@ let
         tree-sitter-zig
         tree-sitter-scheme
         tree-sitter-query
+        # tree-sitter-vim
         # pkgs.vimUtils.buildVimPlugin {
         #   name = "tree-sitter-astro";
         #   src = pkgs.fetchFromGitHub {
@@ -436,6 +492,7 @@ in
   ] ++ utils.nvimTreeBundle
   ++ code.cmpBundle
   ++ code.dapBundle
+  ++ code.idris2-nvim
   ++ utils.telescopeBundle;
   extraPackages = with pkgs; [
     gopls

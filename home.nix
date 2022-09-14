@@ -13,7 +13,7 @@ in
       enable = true;
       wrapperFeatures.gtk = true;
       config = {
-        terminal = "wezterm";
+        terminal = "wezterm --config enable_tab_bar=false";
         modifier = "Mod4";
         # output      = { "*" = {
         #   bg = "/home/hofsiedge/Wallpapers/Lain_04.jpg fill";
@@ -78,6 +78,7 @@ in
       godot
       kdenlive
       kicad-small
+      okular
       # sound & display controls
       pavucontrol
       pulseaudio

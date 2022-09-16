@@ -53,19 +53,19 @@ in
     intelBusId = "PCI:0:2:0";
   };
 
-  services.openvpn.servers = {
-    client =
-      let chdef = cmd: ip: "sudo ip route ${cmd} default via ${ip}";
-      in
-      {
-        config = '' config /home/hofsiedge/Projects/VPN/client.conf '';
-        # up = ''${chdef "del" "192.168.1.1"} && ${chdef "add" "10.8.0.1"}'';
-        # down = ''${chdef "del" "10.8.0.1"} && ${chdef "add" "192.168.1.1"}'';
+  # services.openvpn.servers = {
+  #   client =
+  #     let chdef = cmd: ip: "sudo ip route ${cmd} default via ${ip}";
+  #     in
+  #     {
+  #       config = '' config /home/hofsiedge/Projects/VPN/client.conf '';
+  #       # up = ''${chdef "del" "192.168.1.1"} && ${chdef "add" "10.8.0.1"}'';
+  #       # down = ''${chdef "del" "10.8.0.1"} && ${chdef "add" "192.168.1.1"}'';
 
-        # up = "echo nameserver $nameserver | ${pkgs.openresolv}/sbin/resolvconf -m 0 -a $dev";
-        # down = "${pkgs.openresolv}/sbin/resolvconf -d $dev";
-      };
-  };
+  #       # up = "echo nameserver $nameserver | ${pkgs.openresolv}/sbin/resolvconf -m 0 -a $dev";
+  #       # down = "${pkgs.openresolv}/sbin/resolvconf -d $dev";
+  #     };
+  # };
 
   networking = {
     wireless = {
@@ -191,7 +191,8 @@ in
 
   fonts.fontDir.enable = true;
   fonts.fonts = [ linja-sike ] ++ (with pkgs; [
-    fira-code
+    jetbrains-mono
+    line-awesome
     dejavu_fonts
     ipafont
     kochi-substitute
@@ -199,7 +200,7 @@ in
   # TODO: check
   fonts.fontconfig.defaultFonts = {
     monospace = [
-      "Fira Code Regular"
+      "JetBrains Mono"
       "IPAGothic"
     ];
     sansSerif = [
@@ -219,8 +220,6 @@ in
     ] ++ builtins.attrValues nixcfg;
     variables = {
       EDITOR = "nvim";
-      NEOVIDE_MULTIGRID = "1";
-      NEOVIDE_FRAMELESS = "1";
     };
     loginShellInit = ''
       if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then

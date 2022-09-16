@@ -63,7 +63,6 @@ in
     home.stateVersion = "22.05";
     home.packages = with pkgs; [
       firefox
-      surf
       luakit
       thunderbird
       librewolf-wayland
@@ -77,7 +76,7 @@ in
       obs-studio
       godot
       kdenlive
-      kicad-small
+      # kicad-small
       okular
       # sound & display controls
       pavucontrol
@@ -97,12 +96,10 @@ in
       mako
       wofi
 
-      nerdfonts
       wezterm
       leafpad
       gotop
       tree
-      neovide
 
       docker-compose
 
@@ -130,26 +127,6 @@ in
     };
     programs.neovim = customNeovim pkgs;
     xdg.configFile."nvim/after".source = ./nvim/after;
-    programs.helix = {
-      enable = true;
-      languages = [
-        { name = "go"; auto-format = true; }
-      ];
-      settings = {
-        theme = "monokai_pro_spectrum";
-        editor = {
-          line-number = "relative";
-          mouse = false;
-          scrolloff = 7;
-          lsp.display-messages = true;
-          file-picker.hidden = false;
-          auto-pairs = true;
-        };
-        keys.insert = {
-          k = { j = "normal_mode"; };
-        };
-      };
-    };
     programs.vscode = {
       enable = true;
       package = pkgs.vscodium;
@@ -164,7 +141,7 @@ in
       userSettings = {
         "workbench.colorTheme" = "Default Dark+";
         "python.defaultInterpreterPath" = "/run/current-system/sw/bin/python";
-        "vscode-neovim.neovimExecutablePaths.linux" = "/etc/profiles/per-user/hofsiedge/bin/nvim"; # "/home/hofsiedge/.nix-profile/bin/nvim";
+        "vscode-neovim.neovimExecutablePaths.linux" = "/etc/profiles/per-user/hofsiedge/bin/nvim";
         "vscode-neovim.neovimInitVimPaths.linux" = "/home/hofsiedge/.config/nvim/init.vim";
       };
     };
@@ -176,7 +153,7 @@ in
       enable = true;
       userName = "Hofsiedge";
       userEmail = "hofsiedge@gmail.com";
-      ignores = [ "*.swp" "*.bin" "*.pyc" "__pycache__" ];
+      ignores = [ "*.swp" "*.bin" "*.pyc" "__pycache__" "node_modules" ".nix_node" ];
       extraConfig = {
         init.defaultBranch = "main";
       };

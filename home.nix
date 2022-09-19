@@ -1,8 +1,4 @@
-{ config, pkgs, home-manager, ... }:
-
-let
-  customNeovim = import ./nvim.nix;
-in
+{ config, pkgs, home-manager, neovim, ... }:
 {
   home-manager.useUserPackages = true;
   home-manager.useGlobalPkgs = true;
@@ -116,7 +112,7 @@ in
       egl-wayland
 
       pass-wayland
-    ];
+    ] ++ [ neovim ];
     programs.home-manager.enable = true;
     gtk = {
       enable = true;
@@ -125,8 +121,6 @@ in
       #   package = pkgs.pop-gtk-theme;
       # };
     };
-    programs.neovim = customNeovim pkgs;
-    xdg.configFile."nvim/after".source = ./nvim/after;
     programs.vscode = {
       enable = true;
       package = pkgs.vscodium;
@@ -141,8 +135,8 @@ in
       userSettings = {
         "workbench.colorTheme" = "Default Dark+";
         "python.defaultInterpreterPath" = "/run/current-system/sw/bin/python";
-        "vscode-neovim.neovimExecutablePaths.linux" = "/etc/profiles/per-user/hofsiedge/bin/nvim";
-        "vscode-neovim.neovimInitVimPaths.linux" = "/home/hofsiedge/.config/nvim/init.vim";
+        # "vscode-neovim.neovimExecutablePaths.linux" = "/etc/profiles/per-user/hofsiedge/bin/nvim";
+        # "vscode-neovim.neovimInitVimPaths.linux" = "/home/hofsiedge/.config/nvim/init.vim";
       };
     };
     # TODO: plugins

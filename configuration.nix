@@ -1,4 +1,4 @@
-{ config, pkgs, lib, home-manager, ... }:
+{ config, pkgs, lib, home-manager, neovim, ... }:
 
 let
   linja-sike = pkgs.callPackage ./packages/linja-sike.nix { };
@@ -31,7 +31,7 @@ in
   imports = [
     ./hardware-configuration.nix
     home-manager.nixosModule
-    ./home.nix
+    ./home.nix 
   ];
 
   virtualisation.libvirtd.enable = true;
@@ -112,7 +112,7 @@ in
       let
         hostsFile = builtins.fetchurl {
           url = "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts";
-          sha256 = "1315hvz15gx5ydkq7q55f530kfgphyawk0d3c9ss6my09m8x9gm2";
+          sha256 = "1zm4l2sn1pi03l62jy8q4hw7rq11n90rg0c2biwjmda373frrnm5";
         };
       in
       builtins.readFile "${hostsFile}";

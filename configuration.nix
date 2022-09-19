@@ -1,4 +1,4 @@
-{ config, pkgs, lib, home-manager, neovim, ... }:
+{ config, pkgs, lib, home-manager, neovim, externalHostsfile, ... }:
 
 let
   linja-sike = pkgs.callPackage ./packages/linja-sike.nix { };
@@ -108,14 +108,7 @@ in
       in
       firewallReductor [ TMNF DS3 Something VPN Prometheus ];
 
-    extraHosts =
-      let
-        hostsFile = builtins.fetchurl {
-          url = "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts";
-          sha256 = "1zm4l2sn1pi03l62jy8q4hw7rq11n90rg0c2biwjmda373frrnm5";
-        };
-      in
-      builtins.readFile "${hostsFile}";
+    extraHosts = builtins.readFile externalHostsfile.outPath;
   };
 
   # Set your time zone.

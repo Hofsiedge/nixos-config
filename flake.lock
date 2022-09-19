@@ -1,5 +1,17 @@
 {
   "nodes": {
+    "externalHostsfile": {
+      "flake": false,
+      "locked": {
+        "narHash": "sha256-4+Q4+mEdzOlW718DdqyFEyNZSml+GykN7Ox3M90ryrQ=",
+        "type": "file",
+        "url": "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts"
+      },
+      "original": {
+        "type": "file",
+        "url": "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts"
+      }
+    },
     "flake-utils": {
       "locked": {
         "lastModified": 1659877975,
@@ -79,13 +91,13 @@
         "tree-sitter-astro": "tree-sitter-astro"
       },
       "locked": {
-        "lastModified": 1,
-        "narHash": "sha256-P5zwXsEltkHk1anMFkmLOQexqhcCF4AI8pe/8HC9rqc=",
-        "path": "./nvim",
+        "lastModified": 1663597061,
+        "narHash": "sha256-huNxlDRe6mXGDu53PyXAdg6VqAbwDKcnbWjdUgZj/TE=",
+        "path": "/home/hofsiedge/.nixos-config/nvim",
         "type": "path"
       },
       "original": {
-        "path": "./nvim",
+        "path": "/home/hofsiedge/.nixos-config/nvim",
         "type": "path"
       }
     },
@@ -189,6 +201,7 @@
     },
     "root": {
       "inputs": {
+        "externalHostsfile": "externalHostsfile",
         "home-manager": "home-manager",
         "neovim": "neovim",
         "nixpkgs": "nixpkgs_2"

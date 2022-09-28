@@ -10,9 +10,6 @@
         inputs.nixpkgs.follows = "nixpkgs";
       };
 
-      # This flake is not doing anything. The author is a jerk.
-      # Gotta do the job myself...
-      # TODO: add compilation to the flake outputs
       tree-sitter-astro = {
         url = "github:virchau13/tree-sitter-astro";
       };
@@ -158,7 +155,15 @@
               tree-sitter-zig
               tree-sitter-scheme
               tree-sitter-query
-              # TODO: astro
+
+              (pkgs.callPackage
+                "${nixpkgs}/pkgs/development/tools/parsing/tree-sitter/grammar.nix"
+                { }
+                {
+                  language = "astro";
+                  version = "0";
+                  source = "${inputs.tree-sitter-astro}";
+                })
             ]))
             playground
             # TODO: replace with lua-only one
@@ -219,6 +224,16 @@
               set foldmethod=expr
               set foldexpr=nvim_treesitter#foldexpr()
             ]]
+            local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
+            parser_config.astro = {
+              install_info = {
+                url = "${inputs.tree-sitter-astro}",
+                files = {"src/parser.c", "src/scanner.cc"},
+                generate_requires_npm = false,
+                requires_generate_from_grammar = false,
+              },
+              filetype = "astro",
+            }
 
             -- DAP
             dap = require('dap')

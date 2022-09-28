@@ -124,14 +124,7 @@
     programs.vscode = {
       enable = true;
       package = pkgs.vscodium;
-      extensions = with pkgs.vscode-extensions; [
-        # asvetliakov.vscode-neovim
-        # redhat.vscode-yaml
-        # golang.go
-        # ms-python.python ms-toolsai.jupyter
-        # dbaeumer.vscode-eslint
-        # haskell.haskell
-      ];
+      extensions = with pkgs.vscode-extensions; [ ];
       userSettings = {
         "workbench.colorTheme" = "Default Dark+";
         "python.defaultInterpreterPath" = "/run/current-system/sw/bin/python";

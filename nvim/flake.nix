@@ -1,5 +1,5 @@
 {
-  description = "Neovim with LSP, TreeSitter, DAP, themes and some utils. Most of the plugins are from nixpkgs.vimPlugins, not from the flake inputs";
+  description = "Neovim PDE. Most of the plugins are from nixpkgs.vimPlugins, not from the flake inputs";
 
   inputs =
     {
@@ -27,6 +27,10 @@
       };
       "plugin:nvim-dap-go" = {
         url = "github:leoluz/nvim-dap-go";
+        flake = false;
+      };
+      "plugin:femaco" = {
+        url = "github:AckslD/nvim-FeMaco.lua";
         flake = false;
       };
     };
@@ -159,6 +163,12 @@
             playground
             # TODO: replace with lua-only one
             vim-hexokinase
+
+            pkgs.neovimPlugins.femaco
+          ];
+          extraPackages = with pkgs; [
+            rnix-lsp
+            sumneko-lua-language-server
           ];
           config = luaCfg ''
             --[[ augroups ]]--
@@ -378,7 +388,7 @@
               vim.keymap.set('n', '<leader>D', vim.lsp.buf.type_definition, o)
               vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, o)
               vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, o)
-              vim.keymap.set('n', '<leader>f', vim.lsp.buf.formatting, o)
+              vim.keymap.set('n', '<leader>f', function() vim.lsp.buf.format {async=true} end, o)
             end
 
             -- local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
@@ -409,6 +419,24 @@
                 }
               }
             end
+            require'lspconfig'.sumneko_lua.setup {
+              settings = {
+                Lua = {
+                  runtime = {
+                    version = 'LuaJIT',
+                  },
+                  diagnostics = {
+                    globals = {'vim'},
+                  },
+                  workspace = {
+                    library = vim.api.nvim_get_runtime_file("", true),
+                  },
+                  telemetry = {
+                    enable = false,
+                  },
+                },
+              },
+            }
             if (nvim_lsp['idris2_lsp'] ~= nil) and (vim.fn.executable('idris2') == 1) then
               require('idris2').setup({
                 client = {
@@ -463,6 +491,8 @@
                 require('null-ls').builtins.diagnostics.statix,
               },
             })
+
+            require('femaco').setup()
           '';
         };
 
@@ -484,8 +514,14 @@
                   vim.cmd 'colorscheme codedark'
                 '';
               };
+              kanagawa = {
+                plugins = with pkgs.vimPlugins; [ kanagawa-nvim ];
+                config = luaCfg ''
+                  vim.cmd 'colorscheme kanagawa'
+                '';
+              };
             };
-            theme = themes.material;
+            theme = themes.kanagawa;
           in
           {
             plugins = [ ] ++ theme.plugins;
@@ -520,21 +556,18 @@
         };
       };
       pluginsToConfiguration = plugins: {
-        customRC = builtins.concatStringsSep "\n" (map (x: (pluginStructure // x).config) plugins);
-        packages.qux.start = builtins.concatLists (map (x: (pluginStructure // x).plugins) plugins);
-        packages.qux.opt = [ ];
+        configure = {
+          customRC = builtins.concatStringsSep "\n" (map (x: (pluginStructure // x).config) plugins);
+          packages.qux.start = builtins.concatLists (map (x: (pluginStructure // x).plugins) plugins);
+          packages.qux.opt = [ ];
+        };
+        # TODO: propagatedBuildInputs = = builtins.concatLists (map (x: (pluginStructure // x).extraPackages) plugins);
       };
-      neovim = pkgs.wrapNeovim pkgs.neovim-unwrapped {
+      neovim = pkgs.wrapNeovim pkgs.neovim-unwrapped ({
         withPython3 = false;
         withRuby = false;
         withNodeJs = false;
-        configure = pluginsToConfiguration (with plugins; [
-          extra
-          visuals
-          utils
-          code
-        ]);
-      };
+      } // pluginsToConfiguration (with plugins; [ extra visuals utils code ]));
     in
     rec {
       packages = {

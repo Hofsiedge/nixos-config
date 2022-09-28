@@ -124,7 +124,10 @@ in
 
 
   # Enable CUPS to print documents.
-  services.printing.enable = true;
+  services.printing = {
+    enable = true;
+    drivers = with pkgs; [ gutenprint samsung-unified-linux-driver splix ];
+  };
 
   security.rtkit.enable = true;
   services.pipewire = {
@@ -176,7 +179,8 @@ in
   services.gnome.gnome-keyring.enable = true;
 
   nix = {
-    package = pkgs.nixFlakes;
+    # TODO: check if there are more suitable versions
+    package = pkgs.nixVersions.stable;
     extraOptions = ''
       experimental-features = nix-command flakes
     '';

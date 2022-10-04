@@ -3,7 +3,7 @@
     "externalHostsfile": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-mB7P2F4nXEJ1rt9uP3wv6YeoPMLu01IzyLwsKKPae5o=",
+        "narHash": "sha256-PRYcWXf0qoLVkRqWRJPCEUU26mv3Zd/x15sPKEbXVRM=",
         "type": "file",
         "url": "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts"
       },
@@ -65,11 +65,11 @@
         "utils": "utils"
       },
       "locked": {
-        "lastModified": 1664286632,
-        "narHash": "sha256-fKENvLanhmBENlIbmDAVB8SKSbwdLLBYKu6B7oJ0rLc=",
+        "lastModified": 1664783440,
+        "narHash": "sha256-KlMwR7mUf5h8MPnzV7nGFUAt6ih/euW5xgvZ5x+hwvI=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "6dc8a43f397c92afbc3f771385ac803d96d5eeb5",
+        "rev": "e4e639dd4dc3e431aa5b5f95325f9a66ac7e0dd9",
         "type": "github"
       },
       "original": {
@@ -92,8 +92,8 @@
         "tree-sitter-astro": "tree-sitter-astro"
       },
       "locked": {
-        "lastModified": 1664381952,
-        "narHash": "sha256-XEcM6Z9wcn9XlhGWQ6oE/9BeYeVEqFFW5G0e5mJdTpw=",
+        "lastModified": 1664856239,
+        "narHash": "sha256-FNSErYZsrdkvwjumt4z07usw6EGiXVKUV+DfF3R+Tqo=",
         "path": "/home/hofsiedge/.nixos-config/nvim",
         "type": "path"
       },
@@ -112,11 +112,11 @@
       },
       "locked": {
         "dir": "contrib",
-        "lastModified": 1664375982,
-        "narHash": "sha256-EWNqFX6GsXN7EnQ8V1ULI45LpBGBAiHMTm7ktHvZEZA=",
+        "lastModified": 1664841282,
+        "narHash": "sha256-fWD9EoR69eqU8e1y27aT02ziegnne7culBvoG9eVTHk=",
         "owner": "neovim",
         "repo": "neovim",
-        "rev": "cd96fe06e188bcd6e64f78cb078a307fb45f31f0",
+        "rev": "a93ff5fc696387798c7ba066c11600ae2ce1ce03",
         "type": "github"
       },
       "original": {
@@ -142,11 +142,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1664281702,
-        "narHash": "sha256-haixZ4TJLu1Dciow54wrHrHvlGDVr5sW6MTeAV/ZLuI=",
+        "lastModified": 1664780719,
+        "narHash": "sha256-Oxe6la5dSqRfJogjtY4sRzJjDDqvroJIVkcGEOT87MA=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "7e52b35fe98481a279d89f9c145f8076d049d2b9",
+        "rev": "fd54651f5ffb4a36e8463e0c327a78442b26cbe7",
         "type": "github"
       },
       "original": {

@@ -17,6 +17,8 @@
       };
       extraOptions = [ "--unsupported-gpu" ];
       extraConfig = ''
+        set $menu bemenu-run
+
         # Brightness
         bindsym XF86MonBrightnessDown exec "brightnessctl set 2%-"
         bindsym XF86MonBrightnessUp exec "brightnessctl set +2%"
@@ -90,7 +92,8 @@
       grim
       slurp
       mako
-      wofi
+      # wofi
+      bemenu
 
       wezterm
       leafpad

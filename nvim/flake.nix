@@ -10,9 +10,7 @@
         inputs.nixpkgs.follows = "nixpkgs";
       };
 
-      tree-sitter-astro = {
-        url = "github:virchau13/tree-sitter-astro";
-      };
+      tree-sitter-astro.url = "github:virchau13/tree-sitter-astro";
 
       "plugin:extra_config" = {
         url = "path:./extra_config";
@@ -74,11 +72,6 @@
         ${s}
         EOF
       '';
-      pluginStructure = {
-        plugins = [ ];
-        extraPackages = [ ];
-        config = "";
-      };
       plugins = {
         utils = {
           plugins = with pkgs.vimPlugins; [
@@ -133,6 +126,7 @@
             pkgs.neovimPlugins.nvim-dap-go
             nvim-dap-ui
             nvim-dap-virtual-text
+
             (nvim-treesitter.withPlugins (p: with p; [
               tree-sitter-go
               tree-sitter-gomod
@@ -156,14 +150,11 @@
               tree-sitter-scheme
               tree-sitter-query
 
-              (pkgs.callPackage
-                "${nixpkgs}/pkgs/development/tools/parsing/tree-sitter/grammar.nix"
-                { }
-                {
-                  language = "astro";
-                  version = "0";
-                  source = "${inputs.tree-sitter-astro}";
-                })
+              (pkgs.callPackage "${nixpkgs}/pkgs/development/tools/parsing/tree-sitter/grammar.nix" { } {
+                language = "astro";
+                version = "0";
+                source = "${inputs.tree-sitter-astro}";
+              })
             ]))
             playground
             # TODO: replace with lua-only one
@@ -175,6 +166,7 @@
             rnix-lsp
             sumneko-lua-language-server
           ];
+          # TODO: use ftdetect instead of `set filetype=...`
           config = luaCfg ''
             --[[ augroups ]]--
             vim.cmd [[
@@ -224,16 +216,6 @@
               set foldmethod=expr
               set foldexpr=nvim_treesitter#foldexpr()
             ]]
-            local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
-            parser_config.astro = {
-              install_info = {
-                url = "${inputs.tree-sitter-astro}",
-                files = {"src/parser.c", "src/scanner.cc"},
-                generate_requires_npm = false,
-                requires_generate_from_grammar = false,
-              },
-              filetype = "astro",
-            }
 
             -- DAP
             dap = require('dap')
@@ -365,12 +347,12 @@
             
             
             vim.api.nvim_create_autocmd({'BufWritePre'}, {
-                pattern = { '*.go' },
-                callback = vim.lsp.buf.formatting_sync
+                pattern = {'*.go'},
+                callback = vim.lsp.buf.format,
             })
-            vim.api.nvim_create_autocmd({ 'BufEnter' }, {
+            vim.api.nvim_create_autocmd({'BufEnter'}, {
                 pattern = {'*.nim'},
-                command = 'set ft=nim'
+                command = 'set ft=nim',
             })
             
             ls.add_snippets('go', {
@@ -394,16 +376,16 @@
             local on_attach = function(client, bufnr)
               o = {silent = true, buffer = bufnr}
               vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-              vim.keymap.set('n', 'gD', vim.lsp.buf.declaration, o)
-              vim.keymap.set('n', 'gd', vim.lsp.buf.definition, o)
-              vim.keymap.set('n', 'gi', vim.lsp.buf.implementation, o)
-              vim.keymap.set('n', 'gr', vim.lsp.buf.references, o)
-              vim.keymap.set('n', 'K', vim.lsp.buf.hover, o)
-              vim.keymap.set('n', '<C-k>', vim.lsp.buf.signature_help, o)
-              vim.keymap.set('n', '<leader>D', vim.lsp.buf.type_definition, o)
-              vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename, o)
-              vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action, o)
-              vim.keymap.set('n', '<leader>f', function() vim.lsp.buf.format {async=true} end, o)
+              vim.keymap.set('n', 'gD',         vim.lsp.buf.declaration,                        o)
+              vim.keymap.set('n', 'gd',         vim.lsp.buf.definition,                         o)
+              vim.keymap.set('n', 'gi',         vim.lsp.buf.implementation,                     o)
+              vim.keymap.set('n', 'gr',         vim.lsp.buf.references,                         o)
+              vim.keymap.set('n', 'K',          vim.lsp.buf.hover,                              o)
+              vim.keymap.set('n', '<C-k>',      vim.lsp.buf.signature_help,                     o)
+              vim.keymap.set('n', '<leader>D',  vim.lsp.buf.type_definition,                    o)
+              vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename,                             o)
+              vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action,                        o)
+              vim.keymap.set('n', '<leader>f',  function() vim.lsp.buf.format {async=true} end, o)
             end
 
             -- local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
@@ -570,23 +552,29 @@
           '';
         };
       };
-      pluginsToConfiguration = plugins: {
-        configure = {
-          customRC = builtins.concatStringsSep "\n" (map (x: (pluginStructure // x).config) plugins);
-          packages.qux.start = builtins.concatLists (map (x: (pluginStructure // x).plugins) plugins);
-          packages.qux.opt = [ ];
+      makeNeovim = modules:
+        let
+          dependencies = builtins.concatLists (map (x: x.extraPackages or [ ]) modules);
+          wrappedNeovim = pkgs.wrapNeovim pkgs.neovim-unwrapped {
+            withPython3 = false;
+            withRuby = false;
+            withNodeJs = false;
+            configure = {
+              customRC = builtins.concatStringsSep "\n" (map (x: x.config or "") modules);
+              packages.qux.start = builtins.concatLists (map (x: x.plugins or [ ]) modules);
+              # TODO
+              packages.qux.opt = [ ];
+            };
+          };
+        in
+        pkgs.symlinkJoin {
+          name = "neovim";
+          paths = [ wrappedNeovim ] ++ dependencies;
         };
-        # TODO: propagatedBuildInputs = = builtins.concatLists (map (x: (pluginStructure // x).extraPackages) plugins);
-      };
-      neovim = pkgs.wrapNeovim pkgs.neovim-unwrapped ({
-        withPython3 = false;
-        withRuby = false;
-        withNodeJs = false;
-      } // pluginsToConfiguration (with plugins; [ extra visuals utils code ]));
     in
     rec {
       packages = {
-        inherit neovim;
+        neovim = makeNeovim (with plugins; [ extra visuals utils code ]);
       };
       defaultPackage = packages.neovim;
     }

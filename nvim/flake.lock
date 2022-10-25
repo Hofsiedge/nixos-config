@@ -1,27 +1,15 @@
 {
   "nodes": {
-    "externalHostsfile": {
-      "flake": false,
-      "locked": {
-        "narHash": "sha256-y5U6DwcJDDjywER8ym1bhseXXj2cj5lxsxVsPiHXqcI=",
-        "type": "file",
-        "url": "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts"
-      },
-      "original": {
-        "type": "file",
-        "url": "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts"
-      }
-    },
     "extra_config": {
       "flake": false,
       "locked": {
         "lastModified": 1,
         "narHash": "sha256-eNPKWc+AxOekXVNYgYM/K1QaCTA9mlOwsVwXQjQHrFM=",
-        "path": "/nix/store/lddbzgnsbr5lfk02qs1mvzp619fjm3b3-source/extra_config",
+        "path": "/nix/store/2mrxm97dasl2xsyrbq2j108j5waahvpv-source/nvim/extra_config",
         "type": "path"
       },
       "original": {
-        "path": "/nix/store/lddbzgnsbr5lfk02qs1mvzp619fjm3b3-source/extra_config",
+        "path": "/nix/store/2mrxm97dasl2xsyrbq2j108j5waahvpv-source/nvim/extra_config",
         "type": "path"
       }
     },
@@ -70,56 +58,10 @@
         "type": "github"
       }
     },
-    "home-manager": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "utils": "utils"
-      },
-      "locked": {
-        "lastModified": 1666649150,
-        "narHash": "sha256-kINnLxC0KFalUk4tVO/H5hUU7FVAOYYcUSWrsBpnl+I=",
-        "owner": "nix-community",
-        "repo": "home-manager",
-        "rev": "7dc4e4ebd71280842b4d30975439980baaac9db8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nix-community",
-        "repo": "home-manager",
-        "type": "github"
-      }
-    },
-    "neovim": {
-      "inputs": {
-        "extra_config": "extra_config",
-        "flake-utils": "flake-utils",
-        "neovim-flake": "neovim-flake",
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "plugin:femaco": "plugin:femaco",
-        "plugin:idris2-nvim": "plugin:idris2-nvim",
-        "plugin:nvim-dap-go": "plugin:nvim-dap-go",
-        "tree-sitter-astro": "tree-sitter-astro"
-      },
-      "locked": {
-        "lastModified": 1666666003,
-        "narHash": "sha256-SGygMDTLuj8Bf5dVJCpbq7WdRZNaj00S7BqFoX5o+F4=",
-        "path": "/home/hofsiedge/.nixos-config/nvim",
-        "type": "path"
-      },
-      "original": {
-        "path": "/home/hofsiedge/.nixos-config/nvim",
-        "type": "path"
-      }
-    },
     "neovim-flake": {
       "inputs": {
         "flake-utils": "flake-utils_2",
         "nixpkgs": [
-          "neovim",
           "nixpkgs"
         ]
       },
@@ -141,6 +83,22 @@
     },
     "nixpkgs": {
       "locked": {
+        "lastModified": 1666634325,
+        "narHash": "sha256-0PYdi0HDNasagoOrLv6LOXh2J++T+TnsDg8S/naJGDk=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "969c3ccf30a6cf8f7d431f097743a491b0eda4f7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
         "lastModified": 1662096612,
         "narHash": "sha256-R+Q8l5JuyJryRPdiIaYpO5O3A55rT+/pItBrKcy7LM4=",
         "owner": "NixOS",
@@ -150,21 +108,6 @@
       },
       "original": {
         "id": "nixpkgs",
-        "type": "indirect"
-      }
-    },
-    "nixpkgs_2": {
-      "locked": {
-        "lastModified": 1666539104,
-        "narHash": "sha256-jeuC+d375wHHxMOFLgu7etseCQVJuPNKoEc9X9CsErg=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "0e6df35f39651504249a05191f9a78d251707e22",
-        "type": "github"
-      },
-      "original": {
-        "id": "nixpkgs",
-        "ref": "nixos-unstable",
         "type": "indirect"
       }
     },
@@ -218,16 +161,20 @@
     },
     "root": {
       "inputs": {
-        "externalHostsfile": "externalHostsfile",
-        "home-manager": "home-manager",
-        "neovim": "neovim",
-        "nixpkgs": "nixpkgs_2"
+        "extra_config": "extra_config",
+        "flake-utils": "flake-utils",
+        "neovim-flake": "neovim-flake",
+        "nixpkgs": "nixpkgs",
+        "plugin:femaco": "plugin:femaco",
+        "plugin:idris2-nvim": "plugin:idris2-nvim",
+        "plugin:nvim-dap-go": "plugin:nvim-dap-go",
+        "tree-sitter-astro": "tree-sitter-astro"
       }
     },
     "tree-sitter-astro": {
       "inputs": {
         "flake-utils": "flake-utils_3",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs_2"
       },
       "locked": {
         "lastModified": 1663065578,
@@ -240,21 +187,6 @@
       "original": {
         "owner": "virchau13",
         "repo": "tree-sitter-astro",
-        "type": "github"
-      }
-    },
-    "utils": {
-      "locked": {
-        "lastModified": 1659877975,
-        "narHash": "sha256-zllb8aq3YO3h8B/U0/J1WBgAL8EX5yWf5pMj3G0NAmc=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "c0e246b9b83f637f4681389ecabcb2681b4f3af0",
-        "type": "github"
-      },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
         "type": "github"
       }
     }

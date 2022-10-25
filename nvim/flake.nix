@@ -12,10 +12,17 @@
 
       tree-sitter-astro.url = "github:virchau13/tree-sitter-astro";
 
-      "plugin:extra_config" = {
-        url = "path:./extra_config";
+      extra_config = {
+        url = "./extra_config";
         flake = false;
       };
+
+      /*
+        "plugin:extra_config" = {
+        url = "path:./extra_config";
+        flake = false;
+        };
+      */
       "plugin:idris2-nvim" = {
         url = "github:ShinKage/idris2-nvim";
         flake = false;
@@ -48,14 +55,19 @@
             version = "master";
             src = builtins.getAttr name inputs;
           };
+          extraConfig = buildVimPluginFrom2Nix {
+            pname = "extra_config";
+            version = "master";
+            src = inputs.extra_config;
+          };
         in
         {
-          neovimPlugins = builtins.listToAttrs (map
+          neovimPlugins = (builtins.listToAttrs (map
             (plugin: {
               name = plugName plugin;
               value = buildPlug plugin;
             })
-            plugins);
+            plugins)) // { "extra_config" = extraConfig; };
         };
 
       pkgs = import nixpkgs {
@@ -149,6 +161,7 @@
               tree-sitter-zig
               tree-sitter-scheme
               tree-sitter-query
+              tree-sitter-bash
 
               (pkgs.callPackage "${nixpkgs}/pkgs/development/tools/parsing/tree-sitter/grammar.nix" { } {
                 language = "astro";
@@ -161,9 +174,12 @@
             vim-hexokinase
 
             pkgs.neovimPlugins.femaco
+
+            twilight-nvim
           ];
           extraPackages = with pkgs; [
             rnix-lsp
+            statix
             sumneko-lua-language-server
           ];
           # TODO: use ftdetect instead of `set filetype=...`
@@ -217,6 +233,8 @@
               set foldexpr=nvim_treesitter#foldexpr()
             ]]
 
+            require("twilight").setup({})
+
             -- DAP
             dap = require('dap')
             _set_bp = function ()
@@ -234,6 +252,25 @@
             vim.keymap.set('n', '<Leader>dB', _set_bp,               {silent=true})
             vim.keymap.set('n', '<Leader>dr', dap.repl.open,         {silent=true})
             vim.keymap.set('n', '<Leader>dl', dap.run_last,          {silent=true})
+
+            dap.configurations.python = {
+              {
+                type = 'python';
+                request = 'launch';
+                name = "Launch file";
+                program = "''${file}";
+                pythonPath = function()
+                  return vim.fn.exepath('python')
+                end;
+              },
+            }
+            dap.adapters.python = function(callback, config)
+              callback({
+                type = 'executable';
+                command = vim.fn.exepath('python');
+                args = { '-m', 'debugpy.adapter' };
+              })
+            end
 
             require'dapui'.setup()
             vim.keymap.set('n', '<leader>di', require"dapui".toggle, {silent=true})
@@ -395,7 +432,7 @@
               'tsserver',
               'tailwindcss',
               'nimls',
-              'pyright',
+              'jedi_language_server',
               'rls',
               'zls'
             } do
@@ -486,6 +523,8 @@
             require('null-ls').setup({
               sources = {
                 require('null-ls').builtins.diagnostics.statix,
+                require('null-ls').builtins.diagnostics.mypy,
+                require('null-ls').builtins.formatting.yapf,
               },
             })
 

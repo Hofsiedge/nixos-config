@@ -19,10 +19,18 @@ let
     builtins.mapAttrs cmd {
       edit = "$EDITOR configuration.nix";
       switch = "sudo nixos-rebuild switch --flake .#hofsiedge \"$@\"";
-      update = "sudo nix flake update";
+      update = "sudo nix flake update \"$@\"";
       clean = ''
         sudo nix-collect-garbage -d
         sudo nixos-rebuild boot --flake .#hofsiedge "$@"
+      '';
+      nvim-offline = ''
+        pushd nvim
+        nix flake lock --update-input extra_config --no-warn-dirty
+        nix build --offline --no-warn-dirty
+        popd
+        sudo nix flake lock --update-input neovim --offline --no-warn-dirty
+        nixcfg-switch "$@"
       '';
     };
 
@@ -98,6 +106,7 @@ in
           allowedTCPPorts = [ 2350 3450 ];
           allowedUDPPorts = allowedTCPPorts;
         };
+        # Probably, loki in docker
         Something = {
           allowedTCPPorts = [ 3000 ];
         };

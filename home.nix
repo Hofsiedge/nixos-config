@@ -66,6 +66,8 @@
       librewolf-wayland
       tdesktop
       discord
+
+      libreoffice-fresh
       # media
       krita
       blender
@@ -81,9 +83,7 @@
       pulseaudio
       brightnessctl
 
-      rnix-lsp
       python310
-      statix
 
       # sway modules
       swaylock
@@ -92,7 +92,6 @@
       grim
       slurp
       mako
-      # wofi
       bemenu
 
       wezterm

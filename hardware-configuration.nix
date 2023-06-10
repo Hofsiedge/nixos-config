@@ -13,6 +13,8 @@
   boot.kernelModules = [ "kvm-intel" ];
   boot.extraModulePackages = [ ];
 
+  boot.supportedFilesystems = [ "ntfs" ];
+
   fileSystems."/" =
     { device = "/dev/disk/by-uuid/9b7674aa-8104-4b6b-9c62-b9169312939c";
       fsType = "ext4";
@@ -21,6 +23,12 @@
   fileSystems."/boot" =
     { device = "/dev/disk/by-uuid/CA88-56AC";
       fsType = "vfat";
+    };
+
+  fileSystems."/home/hofsiedge/media/E" = 
+    { device = "/dev/sda1";
+      fsType = "ntfs3";
+      options = [ "rw" "uid=1000"];
     };
 
   swapDevices =

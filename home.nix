@@ -9,11 +9,13 @@
       enable = true;
       wrapperFeatures.gtk = true;
       config = {
-        terminal = "wezterm --config enable_tab_bar=false";
+        terminal = "wezterm";
         modifier = "Mod4";
-        # output      = { "*" = {
-        #   bg = "/home/hofsiedge/Wallpapers/Lain_04.jpg fill";
-        # }; };
+        output = {
+          "*" = {
+            bg = "/home/hofsiedge/Wallpapers/great_wave_off_kanagawa-starry_night.jpg fill";
+          };
+        };
       };
       extraOptions = [ "--unsupported-gpu" ];
       extraConfig = ''
@@ -47,11 +49,8 @@
           scroll_factor 0.5
           dwt disabled
         }
-        input 1386:222:Wacom_Bamboo_16FG_4x5_Finger {
-          events disabled
-        }
         # TODO
-        input 1386:222:Wacom_Bamboo_16FG_4x5_Pen {
+        input 1386:890:Wacom_One_by_Wacom_S_Pen {
         }
 
         # HDMI workspace 9
@@ -62,10 +61,15 @@
     home.packages = with pkgs; [
       firefox
       luakit
-      thunderbird
+      # thunderbird
       librewolf-wayland
       tdesktop
-      discord
+      # discord
+
+      # TODO: make available only to nnn
+      unzip
+
+      # nixops
 
       libreoffice-fresh
       # media
@@ -79,6 +83,8 @@
       # kicad-small
       okular
       # sound & display controls
+      # TODO: use a graph instead (https://github.com/futpib/pagraphcontrol)
+      # TODO: add effects (https://github.com/wwmm/easyeffects)
       pavucontrol
       pulseaudio
       brightnessctl
@@ -94,7 +100,10 @@
       mako
       bemenu
 
-      wezterm
+      libnotify
+
+      anki-bin
+
       leafpad
       gotop
       tree
@@ -114,17 +123,47 @@
       egl-wayland
 
       pass-wayland
+
+      # TODO: bind this to an F-key
+      (pkgs.writeShellScriptBin "toggle-laptop-kbd" ''
+        swaymsg 'input "1:1:AT_Translated_Set_2_keyboard" events toggle'
+      '')
     ] ++ [ neovim ];
     programs.home-manager.enable = true;
     gtk = {
       enable = true;
-      # theme = {
-      #   name = "Pop-GTK-theme";
-      #   package = pkgs.pop-gtk-theme;
-      # };
+      /*
+        theme = {
+        name = "Materia-dark";
+        package = pkgs.materia-theme;
+        };
+      */
     };
-    programs.vscode = {
+    programs.wezterm = {
       enable = true;
+      # this causes recompilation for whatever reason... too bad
+      extraConfig = ''
+        local wezterm = require 'wezterm'
+        return {
+        enable_tab_bar = false,
+        -- color_scheme = "MaterialDesignColors",
+        color_scheme = "Dark Pastel",
+        font_size = 14.1,
+        font = wezterm.font {
+        family = 'JetBrains Mono',
+        },
+        window_padding = {
+        left = 0,
+        right = 0,
+        top = 0,
+        bottom = 0,
+        },
+        }
+      '';
+    };
+
+    programs.vscode = {
+      enable = false;
       package = pkgs.vscodium;
       extensions = with pkgs.vscode-extensions; [ ];
       userSettings = {
@@ -151,10 +190,11 @@
       export XDG_DATA_HOME="$HOME/.local/share"
     '';
   };
-  xdg.mime = {
-    enable = true;
-    defaultApplications = {
-      "application/pdf" = "librewolf.desktop";
+  xdg.mime =
+    {
+      enable = true;
+      defaultApplications = {
+        "application/pdf" = "librewolf.desktop";
+      };
     };
-  };
 }

@@ -6,23 +6,21 @@
       nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
       flake-utils.url = "github:numtide/flake-utils";
       neovim-flake = {
-        url = "github:neovim/neovim?dir=contrib";
+        # url = "github:neovim/neovim?dir=contrib";
+        # url = "github:neovim/neovim/1fa917f9a1585e3b87d41edaf74415505d1bceac?dir=contrib";
+        url = "github:neovim/neovim?ref=stable&dir=contrib";
         inputs.nixpkgs.follows = "nixpkgs";
       };
-
-      tree-sitter-astro.url = "github:virchau13/tree-sitter-astro";
 
       extra_config = {
         url = "./extra_config";
         flake = false;
       };
 
-      /*
-        "plugin:extra_config" = {
-        url = "path:./extra_config";
+      "plugin:lspconfig" = {
+        url = "github:neovim/nvim-lspconfig";
         flake = false;
-        };
-      */
+      };
       "plugin:idris2-nvim" = {
         url = "github:ShinKage/idris2-nvim";
         flake = false;
@@ -33,6 +31,35 @@
       };
       "plugin:femaco" = {
         url = "github:AckslD/nvim-FeMaco.lua";
+        flake = false;
+      };
+      "plugin:nim" = {
+        url = "github:alaviss/nim.nvim";
+        flake = false;
+      };
+      "plugin:image_preview" = {
+        url = "github:adelarsq/image_preview.nvim";
+        flake = false;
+      };
+      "plugin:delay-train" = {
+        url = "github:ja-ford/delaytrain.nvim";
+        flake = false;
+      };
+      /* TODO
+        "plugin:telescope-undo" = {
+        url = "github:debugloop/telescope-undo.nvim";
+        flake = false;
+        };
+      */
+      # TODO: better highlighting (edit hl for the IncSearch group or assign another one)
+      "plugin:tree-climber" = {
+        url = "github:drybalka/tree-climber.nvim";
+        flake = false;
+      };
+
+      # TODO:
+      "plugin:navbuddy" = {
+        url = "github:SmiteshP/nvim-navbuddy";
         flake = false;
       };
     };
@@ -87,12 +114,17 @@
       plugins = {
         utils = {
           plugins = with pkgs.vimPlugins; [
+            hydra-nvim
+            venn-nvim
             easy-align
             nvim-tree-lua
             nvim-web-devicons
             hop-nvim
             plenary-nvim
             telescope-nvim
+            which-key-nvim
+            pkgs.neovimPlugins.image_preview
+            # pkgs.neovimPlugins.delay-train
           ];
           extraPackages = with pkgs; [
             # telescope dependencies
@@ -100,6 +132,43 @@
             fd
           ];
           config = luaCfg ''
+            local Hydra = require('hydra')
+            Hydra({
+              name = 'Draw Diagram',
+              hint = [[
+            Arrow^^^^^^  _f_: surround box
+            ^ ^ _K_ ^ ^  _x_: clear symbol      
+            _H_ ^ ^ _L_  _i_: insert
+            ^ ^ _J_ ^ ^  _a_: insert after
+            ^ ^ ^ ^ ^ ^  _<S-i>_: insert at start
+            ^ ^ ^ ^ ^ ^                _<Esc>_
+            ]],
+              config = {
+                color = 'pink',
+                invoke_on_body = true,
+                hint = {
+                  border = 'rounded'
+                },
+                on_enter = function()
+                  vim.o.virtualedit = 'all'
+                end,
+              },
+              mode = { 'n', 'x' },
+              body = '<leader>p',
+              heads = {
+                { 'H', '<C-v>h:VBox<CR>' },
+                { 'J', '<C-v>j:VBox<CR>' },
+                { 'K', '<C-v>k:VBox<CR>' },
+                { 'L', '<C-v>l:VBox<CR>' },
+                { 'f', ':VBox<CR>', { mode = 'v' }},
+                { 'i', 'i<Insert>' },
+                { '<S-i>', '<S-i><Insert> ' },
+                { 'a', 'a<Insert>' },
+                { 'x', 'r ' },
+                { '<Esc>', nil, { exit = true } },
+              }
+            })
+
             vim.keymap.set('x', '<leader>a', '<Plug>(EasyAlign)')
             vim.keymap.set('n', '<leader>a', '<Plug>(EasyAlign)')
 
@@ -108,19 +177,35 @@
             require'nvim-tree'.setup{}
 
             require'hop'.setup{}
-            vim.keymap.set("n", '<leader> w', "<cmd>HopWord<cr>")
-            vim.keymap.set("n", '<leader> c', "<cmd>HopChar1<cr>")
-            vim.keymap.set("n", '<leader> /', "<cmd>HopPattern<cr>")
+            -- vim.keymap.set("n", '<leader> w', "<cmd>HopWord<cr>")
+            vim.keymap.set("n", '\\', "<cmd>HopWord<cr>")
+            -- vim.keymap.set("n", '<leader> c', "<cmd>HopChar1<cr>")
+            -- vim.keymap.set("n", '<leader> /', "<cmd>HopPattern<cr>")
 
             vim.keymap.set("n", '<leader>ff', '<cmd>Telescope find_files<cr>')
             vim.keymap.set("n", '<leader>fg', '<cmd>Telescope live_grep<cr>')
             vim.keymap.set("n", '<leader>fb', '<cmd>Telescope buffers<cr>')
             vim.keymap.set("n", '<leader>fh', '<cmd>Telescope help_tags<cr>')
+
+            require('which-key').setup{}
+            vim.opt.timeoutlen = 15
+
+            require('image_preview').setup()
+            --[[ require('delaytrain').setup({
+                delay_ms = 1000,
+                grace_period = 1, -- How many repeated keypresses are allowed
+                keys = { 
+                    ['nv'] = {'h', 'j', 'k', 'l'},
+                    ['nvi'] = {'<Left>', '<Down>', '<Up>', '<Right>'},
+                },
+                ignore_filetypes = {},
+            }) ]]
           '';
         };
         code = {
           plugins = with pkgs.vimPlugins; [
-            nvim-lspconfig
+            # nvim-lspconfig
+            pkgs.neovimPlugins.lspconfig
             null-ls-nvim
 
             luasnip
@@ -134,10 +219,16 @@
             pkgs.neovimPlugins.idris2-nvim
             nui-nvim
 
+            pkgs.neovimPlugins.nim
+
+            flutter-tools-nvim
+
             nvim-dap
             pkgs.neovimPlugins.nvim-dap-go
             nvim-dap-ui
             nvim-dap-virtual-text
+
+            comment-nvim
 
             (nvim-treesitter.withPlugins (p: with p; [
               tree-sitter-go
@@ -162,14 +253,12 @@
               tree-sitter-scheme
               tree-sitter-query
               tree-sitter-bash
+              tree-sitter-elm
+              tree-sitter-dart
 
-              (pkgs.callPackage "${nixpkgs}/pkgs/development/tools/parsing/tree-sitter/grammar.nix" { } {
-                language = "astro";
-                version = "0";
-                source = "${inputs.tree-sitter-astro}";
-              })
             ]))
             playground
+            pkgs.neovimPlugins.tree-climber
             # TODO: replace with lua-only one
             vim-hexokinase
 
@@ -180,7 +269,8 @@
           extraPackages = with pkgs; [
             rnix-lsp
             statix
-            sumneko-lua-language-server
+            lua-language-server
+            # sumneko-lua-language-server
           ];
           # TODO: use ftdetect instead of `set filetype=...`
           config = luaCfg ''
@@ -191,9 +281,16 @@
               autocmd FileType css             setlocal tabstop=2 shiftwidth=2 expandtab
               autocmd FileType typescriptreact setlocal tabstop=2 shiftwidth=2 expandtab
               autocmd FileType nix             setlocal tabstop=2 shiftwidth=2 expandtab
+              autocmd FileType dart            setlocal tabstop=2 shiftwidth=2 expandtab
 
-              autocmd BufNewFile,BufRead *.astro set filetype=astro
             ]]
+
+            require('Comment').setup({mappings = false})
+            vim.keymap.set('x', '<leader>b', function()
+              vim.api.nvim_feedkeys(
+                vim.api.nvim_replace_termcodes('<ESC>', true, false, true), 'nx', false)
+              require('Comment.api').toggle.blockwise(vim.fn.visualmode())
+            end)
 
             -- TreeSitter
             require "nvim-treesitter.configs".setup {
@@ -226,12 +323,28 @@
                   goto_node = '<cr>',
                   show_help = '?',
                 },
-              }
+              },
+              query_linter = {
+                enable = true,
+                use_virtual_text = true,
+                lint_events = {"BufWrite", "CursorHold"},
+              },
             }
             vim.cmd [[
               set foldmethod=expr
               set foldexpr=nvim_treesitter#foldexpr()
             ]]
+
+            local keyopts = { noremap = true, silent = true }
+            local climber = require('tree-climber')
+            vim.keymap.set({'n', 'v', 'o'}, '<A-h>', function() climber.goto_parent({highlight = true}) end, keyopts)
+            vim.keymap.set({'n', 'v', 'o'}, '<A-l>', function() climber.goto_child({highlight = true}) end, keyopts)
+            vim.keymap.set({'n', 'v', 'o'}, '<A-j>', function() climber.goto_next({highlight = true}) end, keyopts)
+            vim.keymap.set({'n', 'v', 'o'}, '<A-k>', function() climber.goto_prev({highlight = true}) end, keyopts)
+            vim.keymap.set({'v', 'o'}, '<A-s>', climber.select_node, keyopts)
+            -- vim.keymap.set('n', '<c-k>', climber.swap_prev, keyopts)
+            -- vim.keymap.set('n', '<c-j>', climber.swap_next, keyopts)
+            vim.keymap.set('n', '<c-h>', climber.highlight_node, keyopts)
 
             require("twilight").setup({})
 
@@ -298,7 +411,7 @@
                   },
                   { "i", "c" }
                 ),
-                ["C-space>"] = cmp.mapping.complete(),
+                ["<C-space>"] = cmp.mapping.complete(),
                 ["<tab>"] = cmp.config.disable,
               },
               sources = {
@@ -422,7 +535,7 @@
               vim.keymap.set('n', '<leader>D',  vim.lsp.buf.type_definition,                    o)
               vim.keymap.set('n', '<leader>rn', vim.lsp.buf.rename,                             o)
               vim.keymap.set('n', '<leader>ca', vim.lsp.buf.code_action,                        o)
-              vim.keymap.set('n', '<leader>f',  function() vim.lsp.buf.format {async=true} end, o)
+              vim.keymap.set('n', '<leader>cf', function() vim.lsp.buf.format {async=true} end, o)
             end
 
             -- local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
@@ -431,10 +544,12 @@
               'rnix',
               'tsserver',
               'tailwindcss',
+              'html',
               'nimls',
               'jedi_language_server',
               'rls',
-              'zls'
+              'zls',
+              'elmls',
             } do
               if nvim_lsp[ls] ~= nil then
                 nvim_lsp[ls].setup{
@@ -442,18 +557,13 @@
                 }
               end
             end
-            if nvim_lsp['astro'] ~= nil then
-              nvim_lsp['astro'].setup{
+            require("flutter-tools").setup({
+              flutter_lookup_cmd = 'get_flutter_sdk_path',
+              lsp = {
                 on_attach = on_attach,
-                init_options = {
-                  configuration = {},
-                  typescript = {
-                    serverPath = "typescript"
-                  }
-                }
-              }
-            end
-            require'lspconfig'.sumneko_lua.setup {
+              },
+            })
+            require'lspconfig'.lua_ls.setup {
               settings = {
                 Lua = {
                   runtime = {
@@ -520,11 +630,14 @@
               })
             end
 
+
+
             require('null-ls').setup({
               sources = {
                 require('null-ls').builtins.diagnostics.statix,
                 require('null-ls').builtins.diagnostics.mypy,
-                require('null-ls').builtins.formatting.yapf,
+                require('null-ls').builtins.formatting.black,
+                require('null-ls').builtins.formatting.elm_format,
               },
             })
 
@@ -556,11 +669,19 @@
                   vim.cmd 'colorscheme kanagawa'
                 '';
               };
+              onedarkpro = {
+                plugins = with pkgs.vimPlugins; [ onedarkpro-nvim ];
+                config = luaCfg ''
+                  vim.cmd 'colorscheme onelight'
+                '';
+              };
             };
             theme = themes.kanagawa;
           in
           {
-            plugins = [ ] ++ theme.plugins;
+            plugins = (with pkgs.vimPlugins; [
+              dressing-nvim
+            ]) ++ theme.plugins;
             config = luaCfg ''
               vim.opt.colorcolumn    = '100'
               vim.opt.cursorline     = true
@@ -588,6 +709,26 @@
             vim.opt.autoindent  = true
             vim.opt.fileformat  = 'unix'
             vim.cmd('filetype indent on')       -- load filetype-specific indent files
+
+
+            --[[vim.api.nvim_create_user_command(
+              "SetBackgroundByTime",
+              function()
+                  hour = tonumber(vim.fn.strftime('%H'))
+                  if (hour > 7) and (hour < 19) then
+                      vim.cmd 'set background=light'
+                  else
+                      vim.cmd 'set background=dark'
+                  end
+              end,
+              {})--]]
+              hour = tonumber(vim.fn.strftime('%H'))
+              if (hour > 7) and (hour < 19) then
+                  vim.cmd 'set background=light'
+              else
+                  vim.cmd 'set background=dark'
+              end
+              
           '';
         };
       };

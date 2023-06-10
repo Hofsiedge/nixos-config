@@ -19,6 +19,8 @@
  (#eq? @_functionName "writeShellScriptBin"))
 
 
+; TODO: also where pkgs is not in "with" in the outer scope
+; (i.e. where it is `pkgs.mkShell`)
 ((apply_expression
   (variable_expression) @_functionName
   (attrset_expression
@@ -30,3 +32,19 @@
  (#eq? @_attrName "shellHook"))
 
 (comment) @comment
+
+
+(binding 
+  ((attrpath) @_ident (#eq? @_ident "scripts"))
+  (apply_expression
+    argument: (parenthesized_expression
+                (apply_expression
+                  function: ((apply_expression) @_f 
+                              (#contains? @_f "writeShellScriptBin"))
+                  argument: (rec_attrset_expression
+                              (binding_set
+                                (binding
+                                  attrpath: (attrpath (identifier))
+                                  expression: (indented_string_expression
+                                                (string_fragment) @bash)))))))) 
+

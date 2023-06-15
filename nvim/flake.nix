@@ -282,7 +282,6 @@
               autocmd FileType typescriptreact setlocal tabstop=2 shiftwidth=2 expandtab
               autocmd FileType nix             setlocal tabstop=2 shiftwidth=2 expandtab
               autocmd FileType dart            setlocal tabstop=2 shiftwidth=2 expandtab
-
             ]]
 
             require('Comment').setup({mappings = false})

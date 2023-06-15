@@ -57,23 +57,23 @@ in
     };
   };
   programs.dconf.enable = true;
-  services.samba = {
+  /* services.samba = {
     enable = true;
     openFirewall = true;
     shares = {
-      public = {
-        path = "/home/hofsiedge/media/virt/";
-        # public = "yes";
-        browsable = "yes";
-        "read only" = "no";
-        # "guest ok" = "yes";
-      };
+    public = {
+    path = "/home/hofsiedge/media/virt/";
+    # public = "yes";
+    browsable = "yes";
+    "read only" = "no";
+    # "guest ok" = "yes";
+    };
     };
     /* extraConfig = ''
-      guest account = nobody
-      map to guest = bad user
-      ''; */
-  };
+    guest account = nobody
+    map to guest = bad user
+    ''; * /
+    }; */
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot = {
@@ -89,13 +89,14 @@ in
 
   # TODO: fine tune for the new hardware
   services.xserver.videoDrivers = [ "nvidia" ];
-  hardware.nvidia.package = pkgs.linuxPackages.nvidiaPackages.legacy_470;
+  hardware.nvidia.package = pkgs.linuxPackages.nvidiaPackages.production;
   hardware.nvidia.modesetting.enable = true;
   hardware.nvidia.prime = {
     sync.enable = true;
     nvidiaBusId = "PCI:1:0:0";
     intelBusId = "PCI:0:2:0";
   };
+  # services.xserver.libinput.enable = true;
 
   services.udev =
     let
@@ -145,8 +146,16 @@ in
 
     firewall =
       let
-        reductor = attrs: args: with lib; with builtins; attrsets.genAttrs attrs (name: lists.unique (concatLists (catAttrs name args)));
-        firewallReductor = reductor [ "allowedTCPPorts" "allowedUDPPorts" "allowedTCPPortRanges" "allowedUDPPortRanges" ];
+        reductor = attrs: args: with lib; with builtins;
+          attrsets.genAttrs attrs
+            (name: lists.unique
+              (concatLists (catAttrs name args)));
+        firewallReductor = reductor [
+          "allowedTCPPorts"
+          "allowedUDPPorts"
+          "allowedTCPPortRanges"
+          "allowedUDPPortRanges"
+        ];
         DS3 = {
           allowedTCPPorts = [ 27036 27037 ];
           allowedUDPPorts = [ 4380 27036 ];
@@ -276,6 +285,15 @@ in
   services.pcscd.enable = true;
   # TODO: find another solution to `org.freedesktop.secrets not provided by any service`
   services.gnome.gnome-keyring.enable = true;
+  /*
+    security.pam.services.gnupg.enableGnomeKeyring = true;
+    security.pam.services.gnome-keyring.text = ''
+    auth     optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so
+    session  optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so auto_start
+    password  optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so
+    '';
+  */ # doesn't solve the boot issue
+
 
   nix = {
     # TODO: check if there are more suitable versions
@@ -320,7 +338,7 @@ in
       pinentry-curses
     ] ++ builtins.attrValues nixcfg;
     variables = {
-      EDITOR = "nvim";
+      EDITOR = "hx";
     };
     loginShellInit = ''
       if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
@@ -328,21 +346,6 @@ in
       fi
     '';
   };
-
-
-
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

@@ -11,12 +11,6 @@
   ])
  (#eq? @_functionName "luaCfg"))
 
-((apply_expression
-  (apply_expression
-    (variable_expression) @_functionName)
-  (indented_string_expression
-    (string_fragment) @bash))
- (#eq? @_functionName "writeShellScriptBin"))
 
 
 ; TODO: also where pkgs is not in "with" in the outer scope
@@ -34,17 +28,18 @@
 (comment) @comment
 
 
-(binding 
-  ((attrpath) @_ident (#eq? @_ident "scripts"))
-  (apply_expression
-    argument: (parenthesized_expression
-                (apply_expression
-                  function: ((apply_expression) @_f 
-                              (#contains? @_f "writeShellScriptBin"))
-                  argument: (rec_attrset_expression
-                              (binding_set
-                                (binding
-                                  attrpath: (attrpath (identifier))
-                                  expression: (indented_string_expression
-                                                (string_fragment) @bash)))))))) 
+;; writeShellScriptBin - bash
+(apply_expression
+  function: ((apply_expression
+               function: ((_) @_f1 (#contains? @_f1 "mapAttrs"))
+               argument: ((_) @_f2 (#contains? @_f2 "writeShellScriptBin"))))
+  argument: (_ (_
+                 (binding
+                   expression: ((_ (string_fragment) @bash))))))
 
+((apply_expression
+  (apply_expression
+    (variable_expression) @_functionName)
+  (indented_string_expression
+    (string_fragment) @bash))
+ (#eq? @_functionName "writeShellScriptBin"))

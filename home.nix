@@ -95,10 +95,10 @@
       swaylock
       swayidle
       wl-clipboard
-      grim
-      slurp
-      mako
-      bemenu
+      grim # screenshot
+      slurp # screenshot
+      mako # notifications
+      bemenu # dmenu clone
 
       libnotify
 
@@ -123,12 +123,13 @@
       egl-wayland
 
       pass-wayland
-
-      # TODO: bind this to an F-key
-      (pkgs.writeShellScriptBin "toggle-laptop-kbd" ''
-        swaymsg 'input "1:1:AT_Translated_Set_2_keyboard" events toggle'
-      '')
     ] ++ [ neovim ];
+    # TODO: add helix runtime to ~/.config/helix/runtime
+    # home.file = {
+    #   ".config/helix/runtime" = {
+    #     source = ./helix/runtime;
+    #   };
+    # };
     programs.home-manager.enable = true;
     gtk = {
       enable = true;
@@ -141,23 +142,24 @@
     };
     programs.wezterm = {
       enable = true;
+      # TODO: check whether this is still an issue
       # this causes recompilation for whatever reason... too bad
       extraConfig = ''
         local wezterm = require 'wezterm'
         return {
-        enable_tab_bar = false,
-        -- color_scheme = "MaterialDesignColors",
-        color_scheme = "Dark Pastel",
-        font_size = 14.1,
-        font = wezterm.font {
-        family = 'JetBrains Mono',
-        },
-        window_padding = {
-        left = 0,
-        right = 0,
-        top = 0,
-        bottom = 0,
-        },
+          enable_tab_bar = false,
+          -- color_scheme = "MaterialDesignColors",
+          color_scheme = "Dark Pastel",
+          font_size = 14.1,
+          font = wezterm.font {
+            family = 'JetBrains Mono',
+          },
+          window_padding = {
+            left = 0,
+            right = 0,
+            top = 0,
+            bottom = 0,
+          },
         }
       '';
     };
@@ -169,8 +171,6 @@
       userSettings = {
         "workbench.colorTheme" = "Default Dark+";
         "python.defaultInterpreterPath" = "/run/current-system/sw/bin/python";
-        # "vscode-neovim.neovimExecutablePaths.linux" = "/etc/profiles/per-user/hofsiedge/bin/nvim";
-        # "vscode-neovim.neovimInitVimPaths.linux" = "/home/hofsiedge/.config/nvim/init.vim";
       };
     };
     # TODO: plugins
@@ -189,12 +189,57 @@
     programs.bash.bashrcExtra = ''
       export XDG_DATA_HOME="$HOME/.local/share"
     '';
+
+    programs.helix = {
+      enable = true;
+      package =
+        let
+          languageServers = with pkgs; [
+            rnix-lsp
+            marksman
+            taplo
+            yaml-language-server
+          ];
+        in
+        pkgs.symlinkJoin {
+          name = "helix";
+          paths = [ pkgs.helix ];
+          buildInputs = [ pkgs.makeWrapper ];
+          postBuild = ''
+            wrapProgram $out/bin/hx \
+              --prefix PATH : ${pkgs.lib.makeBinPath languageServers}
+          '';
+        };
+      settings = {
+        theme = "kanagawa";
+        editor = {
+          line-number = "relative";
+          mouse = false;
+          cursor-shape = {
+            insert = "bar";
+            normal = "block";
+            select = "underline";
+          };
+        };
+      };
+      languages = {
+        language = [{
+          name = "nix";
+          auto-format = true;
+          language-server = {
+            command = "rnix-lsp";
+            args = [ "--stdio" ];
+          };
+        }];
+      };
+    };
+
   };
   xdg.mime =
     {
       enable = true;
       defaultApplications = {
-        "application/pdf" = "librewolf.desktop";
+        "application/pdf" = "firefox.desktop";
       };
     };
 }

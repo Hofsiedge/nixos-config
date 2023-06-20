@@ -1,9 +1,4 @@
-{ config, pkgs, ... }:
-
-let
-  customNeovim = import ./nvim.nix;
-
-in
+{ config, pkgs, home-manager, neovim, ... }:
 {
   home-manager.useUserPackages = true;
   home-manager.useGlobalPkgs = true;
@@ -16,12 +11,16 @@ in
       config = {
         terminal = "wezterm";
         modifier = "Mod4";
-        # output      = { "*" = {
-        #   bg = "/home/hofsiedge/Wallpapers/Lain_04.jpg fill";
-        # }; };
+        output = {
+          "*" = {
+            bg = "/home/hofsiedge/Wallpapers/great_wave_off_kanagawa-starry_night.jpg fill";
+          };
+        };
       };
       extraOptions = [ "--unsupported-gpu" ];
       extraConfig = ''
+        set $menu bemenu-run
+
         # Brightness
         bindsym XF86MonBrightnessDown exec "brightnessctl set 2%-"
         bindsym XF86MonBrightnessUp exec "brightnessctl set +2%"
@@ -50,22 +49,30 @@ in
           scroll_factor 0.5
           dwt disabled
         }
-        input 1386:222:Wacom_Bamboo_16FG_4x5_Finger {
-          events disabled
-        }
         # TODO
-        input 1386:222:Wacom_Bamboo_16FG_4x5_Pen {
+        input 1386:890:Wacom_One_by_Wacom_S_Pen {
         }
+
+        # HDMI workspace 9
+        workspace 9 output HDMI-A-1
       '';
     };
     home.stateVersion = "22.05";
     home.packages = with pkgs; [
       firefox
-      surf
-      thunderbird
+      luakit
+      # thunderbird
       librewolf-wayland
       tdesktop
-      discord
+      # discord
+
+      # TODO: make available only to nnn
+      unzip
+      zip
+
+      # nixops
+
+      libreoffice-fresh
       # media
       krita
       blender
@@ -74,29 +81,33 @@ in
       obs-studio
       godot
       kdenlive
-      kicad-small
+      # kicad-small
+      okular
       # sound & display controls
+      # TODO: use a graph instead (https://github.com/futpib/pagraphcontrol)
+      # TODO: add effects (https://github.com/wwmm/easyeffects)
       pavucontrol
       pulseaudio
       brightnessctl
 
-      rnix-lsp
-      python310
+      python311
+
       # sway modules
       swaylock
       swayidle
       wl-clipboard
-      grim
-      slurp
-      mako
-      wofi
+      grim # screenshot
+      slurp # screenshot
+      mako # notifications
+      bemenu # dmenu clone
 
-      nerdfonts
-      wezterm
+      libnotify
+
+      anki-bin
+
       leafpad
       gotop
       tree
-      neovide
 
       docker-compose
 
@@ -113,53 +124,55 @@ in
       egl-wayland
 
       pass-wayland
-    ];
+    ] ++ [ neovim ];
+    # TODO: add helix runtime to ~/.config/helix/runtime
+    # ref: https://nix-community.github.io/home-manager/options.html#opt-home.file
+    # home.file = {
+    #   ".config/helix/runtime" = {
+    #     source = ./helix/runtime;
+    #   };
+    # };
     programs.home-manager.enable = true;
     gtk = {
       enable = true;
-      # theme = {
-      #   name = "Pop-GTK-theme";
-      #   package = pkgs.pop-gtk-theme;
-      # };
+      /*
+        theme = {
+        name = "Materia-dark";
+        package = pkgs.materia-theme;
+        };
+      */
     };
-    programs.neovim = customNeovim pkgs;
-    xdg.configFile."nvim/after".source = ./nvim/after;
-    programs.helix = {
+    programs.wezterm = {
       enable = true;
-      languages = [
-        { name = "go"; auto-format = true; }
-      ];
-      settings = {
-        theme = "monokai_pro_spectrum";
-        editor = {
-          line-number = "relative";
-          mouse = false;
-          scrolloff = 7;
-          lsp.display-messages = true;
-          file-picker.hidden = false;
-          auto-pairs = true;
-        };
-        keys.insert = {
-          k = { j = "normal_mode"; };
-        };
-      };
+      # TODO: check whether this is still an issue
+      # this causes recompilation for whatever reason... too bad
+      extraConfig = ''
+        local wezterm = require 'wezterm'
+        return {
+          enable_tab_bar = false,
+          -- color_scheme = "MaterialDesignColors",
+          color_scheme = "Dark Pastel",
+          font_size = 14.1,
+          font = wezterm.font {
+            family = 'JetBrains Mono',
+          },
+          window_padding = {
+            left = 0,
+            right = 0,
+            top = 0,
+            bottom = 0,
+          },
+        }
+      '';
     };
+
     programs.vscode = {
-      enable = true;
+      enable = false;
       package = pkgs.vscodium;
-      extensions = with pkgs.vscode-extensions; [
-        # asvetliakov.vscode-neovim
-        # redhat.vscode-yaml
-        # golang.go
-        # ms-python.python ms-toolsai.jupyter
-        # dbaeumer.vscode-eslint
-        # haskell.haskell
-      ];
+      extensions = with pkgs.vscode-extensions; [ ];
       userSettings = {
         "workbench.colorTheme" = "Default Dark+";
         "python.defaultInterpreterPath" = "/run/current-system/sw/bin/python";
-        "vscode-neovim.neovimExecutablePaths.linux" = "/etc/profiles/per-user/hofsiedge/bin/nvim"; # "/home/hofsiedge/.nix-profile/bin/nvim";
-        "vscode-neovim.neovimInitVimPaths.linux" = "/home/hofsiedge/.config/nvim/init.vim";
       };
     };
     # TODO: plugins
@@ -170,7 +183,7 @@ in
       enable = true;
       userName = "Hofsiedge";
       userEmail = "hofsiedge@gmail.com";
-      ignores = [ "*.swp" "*.bin" "*.pyc" "__pycache__" ];
+      ignores = [ "*.swp" "*.bin" "*.pyc" "__pycache__" "node_modules" ".nix_node" ];
       extraConfig = {
         init.defaultBranch = "main";
       };
@@ -178,11 +191,58 @@ in
     programs.bash.bashrcExtra = ''
       export XDG_DATA_HOME="$HOME/.local/share"
     '';
-  };
-  xdg.mime = {
-    enable = true;
-    defaultApplications = {
-      "application/pdf" = "librewolf.desktop";
+
+    programs.helix = {
+      enable = true;
+      package =
+        let
+          languageServers = with pkgs; [
+            rnix-lsp
+            marksman
+            taplo
+            yaml-language-server
+            python311Packages.python-lsp-server # TODO: pylsp plugins
+          ];
+        in
+        pkgs.symlinkJoin {
+          name = "helix";
+          paths = [ pkgs.helix ];
+          buildInputs = [ pkgs.makeWrapper ];
+          postBuild = ''
+            wrapProgram $out/bin/hx \
+              --prefix PATH : ${pkgs.lib.makeBinPath languageServers}
+          '';
+        };
+      settings = {
+        theme = "kanagawa";
+        editor = {
+          line-number = "relative";
+          mouse = false;
+          cursor-shape = {
+            insert = "bar";
+            normal = "block";
+            select = "underline";
+          };
+        };
+      };
+      languages = {
+        language = [{
+          name = "nix";
+          auto-format = true;
+          language-server = {
+            command = "rnix-lsp";
+            args = [ "--stdio" ];
+          };
+        }];
+      };
     };
+
   };
+  xdg.mime =
+    {
+      enable = true;
+      defaultApplications = {
+        "application/pdf" = "firefox.desktop";
+      };
+    };
 }

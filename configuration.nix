@@ -1,8 +1,4 @@
-# Edit this configuration file to define what should be installed on
-# your system.  Help is available in the configuration.nix(5) man page
-# and in the NixOS manual (accessible by running ‘nixos-help’).
-
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, home-manager, neovim, externalHostsfile, ... }:
 
 let
   linja-sike = pkgs.callPackage ./packages/linja-sike.nix { };
@@ -13,55 +9,125 @@ let
     export __VK_LAYER_NV_optimus=NVIDIA_only
     exec "$@"
   '';
-  check-root-permissions = pkgs.writeShellScriptBin "check-root-permissions" ''
-    if [ "$EUID" -ne 0 ]
-      then printf "\033[31m[%s]\033[0m %s\n" "permission denied"
-      exit 1
-    fi
-  '';
-  nixcfg-switch = pkgs.writeShellScriptBin "nixcfg-switch" ''
-    pushd /home/hofsiedge/.nixos-config/
-    sudo nixos-rebuild switch -I nixos-config=./configuration.nix "$@"
-    popd
-  '';
-  nixcfg-clean = pkgs.writeShellScriptBin "nixcfg-clean" ''
-    pushd /home/hofsiedge/.nixos-config/
-    sudo nix-collect-garbage -d
-    sudo nixos-rebuild boot -I nixos-config=./configuration.nix "$@"
-    popd
-  '';
-  nixcfg-edit = pkgs.writeShellScriptBin "nixcfg-edit" ''
-    pushd /home/hofsiedge/.nixos-config/
-    $EDITOR configuration.nix
-    popd
-  '';
+  nixcfg =
+    let cmd = name: body: pkgs.writeShellScriptBin "nixcfg-${name}" ''
+      pushd /home/hofsiedge/.nixos-config/
+      ${body}
+      popd
+    '';
+    in
+    builtins.mapAttrs cmd {
+      edit = "$EDITOR configuration.nix";
+      switch = "sudo nixos-rebuild switch --flake .#hofsiedge \"$@\"";
+      update = "sudo nix flake update \"$@\"";
+      clean = ''
+        sudo nix-collect-garbage -d
+        sudo nixos-rebuild boot --flake .#hofsiedge "$@"
+      '';
+      # TODO: generalize
+      nvim-offline = ''
+        pushd nvim
+        nix flake lock --update-input extra_config --no-warn-dirty
+        nix build --offline --no-warn-dirty
+        popd
+        sudo nix flake lock --update-input neovim --offline --no-warn-dirty
+        nixcfg-switch "$@"
+      '';
+      search-offline = ''
+        nix search stale --offline "$@"
+      '';
+      repair = ''
+        sudo nix-store --verify --check-contents --repair
+      '';
+    };
 
 in
 {
   imports = [
     ./hardware-configuration.nix
-    <home-manager/nixos>
+    home-manager.nixosModule
     ./home.nix
   ];
 
-  virtualisation.libvirtd.enable = true;
+  virtualisation.libvirtd = {
+    enable = true;
+    qemu = {
+      ovmf.enable = true;
+      ovmf.packages = with pkgs; [ OVMFFull.fd virtiofsd win-virtio ];
+    };
+  };
   programs.dconf.enable = true;
+  /* services.samba = {
+    enable = true;
+    openFirewall = true;
+    shares = {
+    public = {
+    path = "/home/hofsiedge/media/virt/";
+    # public = "yes";
+    browsable = "yes";
+    "read only" = "no";
+    # "guest ok" = "yes";
+    };
+    };
+    /* extraConfig = ''
+    guest account = nobody
+    map to guest = bad user
+    ''; * /
+    }; */
 
   # Use the systemd-boot EFI boot loader.
-  boot.loader.systemd-boot.enable = true;
+  boot.loader.systemd-boot = {
+    enable = true;
+    consoleMode = "max";
+  };
   boot.loader.efi.canTouchEfiVariables = true;
+  boot.plymouth.enable = true;
+  boot.plymouth.theme = "breeze";
 
   # systemd-resolved - resolvconf manager (required by iwd)
   services.resolved.enable = true;
 
   # TODO: fine tune for the new hardware
   services.xserver.videoDrivers = [ "nvidia" ];
+  hardware.nvidia.package = pkgs.linuxPackages.nvidiaPackages.stable;
   hardware.nvidia.modesetting.enable = true;
   hardware.nvidia.prime = {
     sync.enable = true;
     nvidiaBusId = "PCI:1:0:0";
     intelBusId = "PCI:0:2:0";
   };
+  # services.xserver.libinput.enable = true;
+
+  services.udev =
+    let
+      swaymsg = "/etc/profiles/per-user/hofsiedge/bin/swaymsg";
+      laptop_keyboard = "input 1:1:AT_Translated_Set_2_keyboard";
+      set_keyboard_status = pkgs.writeShellScriptBin "set_keyboard_status" ''
+        eval "${swaymsg} --socket $(ls /run/user/1000/sway-ipc.* | head -n 1) '${laptop_keyboard} events $@'"
+      '';
+      usb_kb_id = "4d9/293/1104";
+    in
+    {
+      extraRules = ''
+        ACTION=="add", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status disabled" 
+        ACTION=="remove", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status enabled" 
+      '';
+    };
+
+
+  # services.openvpn.servers = {
+  #   client =
+  #     let chdef = cmd: ip: "sudo ip route ${cmd} default via ${ip}";
+  #     in
+  #     {
+  #       config = '' config /home/hofsiedge/Projects/VPN/client.conf '';
+  #       # up = ''${chdef "del" "192.168.1.1"} && ${chdef "add" "10.8.0.1"}'';
+  #       # down = ''${chdef "del" "10.8.0.1"} && ${chdef "add" "192.168.1.1"}'';
+
+  #       # up = "echo nameserver $nameserver | ${pkgs.openresolv}/sbin/resolvconf -m 0 -a $dev";
+  #       # down = "${pkgs.openresolv}/sbin/resolvconf -d $dev";
+  #     };
+  # };
 
   networking = {
     wireless = {
@@ -80,8 +146,16 @@ in
 
     firewall =
       let
-        reductor = attrs: args: with lib; attrsets.genAttrs attrs (name: lists.unique (with builtins; concatLists (catAttrs name args)));
-        firewallReductor = reductor [ "allowedTCPPorts" "allowedUDPPorts" "allowedTCPPortRanges" "allowedUDPPortRanges" ];
+        reductor = attrs: args: with lib; with builtins;
+          attrsets.genAttrs attrs
+            (name: lists.unique
+              (concatLists (catAttrs name args)));
+        firewallReductor = reductor [
+          "allowedTCPPorts"
+          "allowedUDPPorts"
+          "allowedTCPPortRanges"
+          "allowedUDPPortRanges"
+        ];
         DS3 = {
           allowedTCPPorts = [ 27036 27037 ];
           allowedUDPPorts = [ 4380 27036 ];
@@ -92,34 +166,72 @@ in
           allowedTCPPorts = [ 2350 3450 ];
           allowedUDPPorts = allowedTCPPorts;
         };
+        # Probably, loki in docker
         Something = {
           allowedTCPPorts = [ 3000 ];
         };
+        Prometheus = {
+          allowedTCPPorts = [ 9090 ];
+        };
+        VPN = {
+          allowedUDPPorts = [ 53 1194 ];
+        };
+        publicHTTP = rec {
+          allowedTCPPorts = [ 80 ];
+          allowedUDPPorts = allowedTCPPorts;
+        };
       in
-      firewallReductor [ TMNF DS3 Something ];
+      firewallReductor [ TMNF DS3 Something VPN Prometheus publicHTTP ];
 
-    extraHosts =
-      let
-        hostsPath = https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts;
-        hostsFile = builtins.fetchurl hostsPath;
-      in
-      builtins.readFile "${hostsFile}";
+    extraHosts = builtins.readFile externalHostsfile.outPath;
   };
 
   # Set your time zone.
   time.timeZone = "Asia/Chita";
 
   # Ethernet port auto config
-  networking.interfaces.enp3s0.useDHCP = true;
+  # FIXME
+  /*
+    Dec 08 21:57:19 nixos dhcpcd[5092]: DUID 00:04:27:4e:4c:75:12:87:43:4a:96:fb:4b:65:e0:bc:c0:c6
+    Dec 08 21:57:19 nixos dhcpcd[5092]: enp3s0: waiting for carrier
+    Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such file or directory
+    Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such file or directory
+    Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such file or directory
+    Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such file or directory
+    Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such process
+    Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such process
+    Dec 08 21:57:49 nixos dhcpcd[5092]: timed out
+    Dec 08 21:57:49 nixos systemd[1]: Started DHCP Client.
+  */
+  # networking.interfaces.enp3s0.useDHCP = false;
+  # networking.interfaces.enp3s0.useDHCP = false;
+  /* networking.interfaces.enp3s0.ipv4.addresses = [{
+    address = "192.168.1.153";
+    prefixLength = 24;
+    }]; */
   # soon to be deprecated
+  # networking.useDHCP = false;
   networking.useDHCP = false;
+  networking.interfaces = {
+    enp3s0.ipv4.addresses = [{
+      address = "192.168.1.153";
+      prefixLength = 24;
+    }];
+    wlan0.ipv4.addresses = [{
+      address = "192.168.10.94";
+      prefixLength = 24;
+    }];
+  };
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
 
 
   # Enable CUPS to print documents.
-  services.printing.enable = true;
+  services.printing = {
+    enable = true;
+    drivers = with pkgs; [ gutenprint samsung-unified-linux-driver splix ];
+  };
 
   security.rtkit.enable = true;
   services.pipewire = {
@@ -149,14 +261,22 @@ in
       "video" # Brightness control
       "audio"
       "libvirtd"
+      # "adbusers"
     ];
   };
 
   nixpkgs.config = {
     allowUnfree = true;
-    packageOverrides = pkgs: { };
+    packageOverrides = pkgs: {
+      nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
+        inherit pkgs;
+      };
+    };
+    permittedInsecurePackages = [ ];
   };
   programs.steam.enable = true;
+
+  # programs.adb.enable = true;
 
   # GnuPG
   programs.gnupg.agent = {
@@ -165,50 +285,60 @@ in
   services.pcscd.enable = true;
   # TODO: find another solution to `org.freedesktop.secrets not provided by any service`
   services.gnome.gnome-keyring.enable = true;
+  /*
+    security.pam.services.gnupg.enableGnomeKeyring = true;
+    security.pam.services.gnome-keyring.text = ''
+    auth     optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so
+    session  optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so auto_start
+    password  optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so
+    '';
+  */ # doesn't solve the boot issue
+
 
   nix = {
-    package = pkgs.nixFlakes;
+    # TODO: check if there are more suitable versions
+    package = pkgs.nixVersions.stable;
     extraOptions = ''
-      experimental-features = nix-command flakes
+      experimental-features = nix-command flakes repl-flake
+      keep-going = true
+      max-silent-time = 180
+      auto-optimise-store = true
     '';
   };
 
   fonts.fontDir.enable = true;
   fonts.fonts = [ linja-sike ] ++ (with pkgs; [
-    fira-code
-    dejavu_fonts
+    (nerdfonts.override { fonts = [ "JetBrainsMono" "NerdFontsSymbolsOnly" ]; })
+    line-awesome
+    # dejavu_fonts
+    open-sans
+    libertine
     ipafont
     kochi-substitute
   ]);
   # TODO: check
   fonts.fontconfig.defaultFonts = {
     monospace = [
-      "Fira Code Regular"
+      "JetBrainsMono Nerd Font Mono"
       "IPAGothic"
     ];
     sansSerif = [
-      "DejaVu Sans"
+      "Open Sans"
       "IPAGothic"
     ];
     serif = [
-      "DejaVu Serif"
+      "Linux Libertine O"
       "IPAMincho"
     ];
   };
   environment = {
     systemPackages = with pkgs; [
       nvidia-offload
-      check-root-permissions
-      nixcfg-switch
-      nixcfg-clean
-      nixcfg-edit
       virt-manager
-      pinentry
-    ];
+      pinentry-curses
+    ] ++ builtins.attrValues nixcfg;
     variables = {
-      EDITOR = "nvim";
-      NEOVIDE_MULTIGRID = "1";
-      NEOVIDE_FRAMELESS = "1";
+      EDITOR = "hx";
     };
     loginShellInit = ''
       if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
@@ -217,21 +347,6 @@ in
     '';
   };
 
-
-
-  # Some programs need SUID wrappers, can be configured further or are
-  # started in user sessions.
-  # programs.mtr.enable = true;
-  # programs.gnupg.agent = {
-  #   enable = true;
-  #   enableSSHSupport = true;
-  # };
-
-  # List services that you want to enable:
-
-  # Enable the OpenSSH daemon.
-  # services.openssh.enable = true;
-
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions
   # on your system were taken. It‘s perfectly fine and recommended to leave
@@ -239,6 +354,4 @@ in
   # Before changing this value read the documentation for this option
   # (e.g. man configuration.nix or on https://nixos.org/nixos/options.html).
   system.stateVersion = "22.05"; # Did you read the comment?
-
 }
-

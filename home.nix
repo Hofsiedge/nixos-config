@@ -68,6 +68,7 @@
 
       # TODO: make available only to nnn
       unzip
+      zip
 
       # nixops
 
@@ -89,7 +90,7 @@
       pulseaudio
       brightnessctl
 
-      python310
+      python311
 
       # sway modules
       swaylock
@@ -125,6 +126,7 @@
       pass-wayland
     ] ++ [ neovim ];
     # TODO: add helix runtime to ~/.config/helix/runtime
+    # ref: https://nix-community.github.io/home-manager/options.html#opt-home.file
     # home.file = {
     #   ".config/helix/runtime" = {
     #     source = ./helix/runtime;
@@ -199,6 +201,7 @@
             marksman
             taplo
             yaml-language-server
+            python311Packages.python-lsp-server # TODO: pylsp plugins
           ];
         in
         pkgs.symlinkJoin {

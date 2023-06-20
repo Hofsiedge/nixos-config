@@ -89,7 +89,7 @@ in
 
   # TODO: fine tune for the new hardware
   services.xserver.videoDrivers = [ "nvidia" ];
-  hardware.nvidia.package = pkgs.linuxPackages.nvidiaPackages.production;
+  hardware.nvidia.package = pkgs.linuxPackages.nvidiaPackages.stable;
   hardware.nvidia.modesetting.enable = true;
   hardware.nvidia.prime = {
     sync.enable = true;

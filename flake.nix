@@ -15,10 +15,19 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, ... } @ inputs: {
+  outputs = {
+    self,
+    nixpkgs,
+    home-manager,
+    ...
+  } @ inputs: {
     nixosConfigurations.hofsiedge = nixpkgs.lib.nixosSystem {
       system = "x86_64-linux";
-      specialArgs = inputs // { inherit (inputs.neovim.packages.x86_64-linux) neovim; };
+      specialArgs =
+        inputs
+        // {
+          inherit (inputs.neovim.packages.x86_64-linux) neovim;
+        };
       modules = [
         ./configuration.nix
         {

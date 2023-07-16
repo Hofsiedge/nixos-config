@@ -1,7 +1,13 @@
-{ config, pkgs, lib, home-manager, neovim, externalHostsfile, ... }:
-
-let
-  linja-sike = pkgs.callPackage ./packages/linja-sike.nix { };
+{
+  config,
+  pkgs,
+  lib,
+  home-manager,
+  neovim,
+  externalHostsfile,
+  ...
+}: let
+  linja-sike = pkgs.callPackage ./packages/linja-sike.nix {};
   nvidia-offload = pkgs.writeShellScriptBin "nvidia-offload" ''
     export __NV_PRIME_RENDER_OFFLOAD=1
     export __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0
@@ -9,13 +15,14 @@ let
     export __VK_LAYER_NV_optimus=NVIDIA_only
     exec "$@"
   '';
-  nixcfg =
-    let cmd = name: body: pkgs.writeShellScriptBin "nixcfg-${name}" ''
-      pushd /home/hofsiedge/.nixos-config/
-      ${body}
-      popd
-    '';
-    in
+  nixcfg = let
+    cmd = name: body:
+      pkgs.writeShellScriptBin "nixcfg-${name}" ''
+        pushd /home/hofsiedge/.nixos-config/
+        ${body}
+        popd
+      '';
+  in
     builtins.mapAttrs cmd {
       edit = "$EDITOR configuration.nix";
       switch = "sudo nixos-rebuild switch --flake .#hofsiedge \"$@\"";
@@ -40,9 +47,7 @@ let
         sudo nix-store --verify --check-contents --repair
       '';
     };
-
-in
-{
+in {
   imports = [
     ./hardware-configuration.nix
     home-manager.nixosModule
@@ -53,27 +58,30 @@ in
     enable = true;
     qemu = {
       ovmf.enable = true;
-      ovmf.packages = with pkgs; [ OVMFFull.fd virtiofsd win-virtio ];
+      ovmf.packages = with pkgs; [OVMFFull.fd virtiofsd win-virtio];
     };
   };
   programs.dconf.enable = true;
-  /* services.samba = {
-    enable = true;
-    openFirewall = true;
-    shares = {
-    public = {
-    path = "/home/hofsiedge/media/virt/";
-    # public = "yes";
-    browsable = "yes";
-    "read only" = "no";
-    # "guest ok" = "yes";
-    };
-    };
-    /* extraConfig = ''
-    guest account = nobody
-    map to guest = bad user
-    ''; * /
-    }; */
+
+  /*
+   services.samba = {
+  enable = true;
+  openFirewall = true;
+  shares = {
+  public = {
+  path = "/home/hofsiedge/media/virt/";
+  # public = "yes";
+  browsable = "yes";
+  "read only" = "no";
+  # "guest ok" = "yes";
+  };
+  };
+  /* extraConfig = ''
+  guest account = nobody
+  map to guest = bad user
+  ''; * /
+  };
+  */
 
   # Use the systemd-boot EFI boot loader.
   boot.loader.systemd-boot = {
@@ -88,7 +96,7 @@ in
   services.resolved.enable = true;
 
   # TODO: fine tune for the new hardware
-  services.xserver.videoDrivers = [ "nvidia" ];
+  services.xserver.videoDrivers = ["nvidia"];
   hardware.nvidia.package = pkgs.linuxPackages.nvidiaPackages.stable;
   hardware.nvidia.modesetting.enable = true;
   hardware.nvidia.prime = {
@@ -98,22 +106,19 @@ in
   };
   # services.xserver.libinput.enable = true;
 
-  services.udev =
-    let
-      swaymsg = "/etc/profiles/per-user/hofsiedge/bin/swaymsg";
-      laptop_keyboard = "input 1:1:AT_Translated_Set_2_keyboard";
-      set_keyboard_status = pkgs.writeShellScriptBin "set_keyboard_status" ''
-        eval "${swaymsg} --socket $(ls /run/user/1000/sway-ipc.* | head -n 1) '${laptop_keyboard} events $@'"
-      '';
-      usb_kb_id = "4d9/293/1104";
-    in
-    {
-      extraRules = ''
-        ACTION=="add", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status disabled" 
-        ACTION=="remove", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status enabled" 
-      '';
-    };
-
+  services.udev = let
+    swaymsg = "/etc/profiles/per-user/hofsiedge/bin/swaymsg";
+    laptop_keyboard = "input 1:1:AT_Translated_Set_2_keyboard";
+    set_keyboard_status = pkgs.writeShellScriptBin "set_keyboard_status" ''
+      eval "${swaymsg} --socket $(ls /run/user/1000/sway-ipc.* | head -n 1) '${laptop_keyboard} events $@'"
+    '';
+    usb_kb_id = "4d9/293/1104";
+  in {
+    extraRules = ''
+      ACTION=="add", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status disabled"
+      ACTION=="remove", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status enabled"
+    '';
+  };
 
   # services.openvpn.servers = {
   #   client =
@@ -144,93 +149,111 @@ in
       };
     };
 
-    firewall =
-      let
-        reductor = attrs: args: with lib; with builtins;
+    firewall = let
+      reductor = attrs: args:
+        with lib;
+        with builtins;
           attrsets.genAttrs attrs
-            (name: lists.unique
-              (concatLists (catAttrs name args)));
-        firewallReductor = reductor [
-          "allowedTCPPorts"
-          "allowedUDPPorts"
-          "allowedTCPPortRanges"
-          "allowedUDPPortRanges"
+          (name:
+            lists.unique
+            (concatLists (catAttrs name args)));
+      firewallReductor = reductor [
+        "allowedTCPPorts"
+        "allowedUDPPorts"
+        "allowedTCPPortRanges"
+        "allowedUDPPortRanges"
+      ];
+      DS3 = {
+        allowedTCPPorts = [27036 27037];
+        allowedUDPPorts = [4380 27036];
+        allowedTCPPortRanges = [
+          {
+            from = 27015;
+            to = 27030;
+          }
         ];
-        DS3 = {
-          allowedTCPPorts = [ 27036 27037 ];
-          allowedUDPPorts = [ 4380 27036 ];
-          allowedTCPPortRanges = [{ from = 27015; to = 27030; }];
-          allowedUDPPortRanges = [{ from = 27000; to = 27031; }];
-        };
-        TMNF = rec {
-          allowedTCPPorts = [ 2350 3450 ];
-          allowedUDPPorts = allowedTCPPorts;
-        };
-        # Probably, loki in docker
-        Something = {
-          allowedTCPPorts = [ 3000 ];
-        };
-        Prometheus = {
-          allowedTCPPorts = [ 9090 ];
-        };
-        VPN = {
-          allowedUDPPorts = [ 53 1194 ];
-        };
-        publicHTTP = rec {
-          allowedTCPPorts = [ 80 ];
-          allowedUDPPorts = allowedTCPPorts;
-        };
-      in
-      firewallReductor [ TMNF DS3 Something VPN Prometheus publicHTTP ];
+        allowedUDPPortRanges = [
+          {
+            from = 27000;
+            to = 27031;
+          }
+        ];
+      };
+      TMNF = rec {
+        allowedTCPPorts = [2350 3450];
+        allowedUDPPorts = allowedTCPPorts;
+      };
+      # Probably, loki in docker
+      Something = {
+        allowedTCPPorts = [3000];
+      };
+      Prometheus = {
+        allowedTCPPorts = [9090];
+      };
+      VPN = {
+        allowedUDPPorts = [53 1194];
+      };
+      publicHTTP = rec {
+        allowedTCPPorts = [80];
+        allowedUDPPorts = allowedTCPPorts;
+      };
+    in
+      # FIXME: enable = True. Have to find out what ports are blocked that the Kv-243 network requires
+      (firewallReductor [TMNF DS3 Something VPN Prometheus publicHTTP]) // {enable = false;};
 
     extraHosts = builtins.readFile externalHostsfile.outPath;
   };
 
   # Set your time zone.
-  time.timeZone = "Asia/Chita";
+  time.timeZone = "Europe/Moscow";
 
   # Ethernet port auto config
   # FIXME
   /*
-    Dec 08 21:57:19 nixos dhcpcd[5092]: DUID 00:04:27:4e:4c:75:12:87:43:4a:96:fb:4b:65:e0:bc:c0:c6
-    Dec 08 21:57:19 nixos dhcpcd[5092]: enp3s0: waiting for carrier
-    Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such file or directory
-    Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such file or directory
-    Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such file or directory
-    Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such file or directory
-    Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such process
-    Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such process
-    Dec 08 21:57:49 nixos dhcpcd[5092]: timed out
-    Dec 08 21:57:49 nixos systemd[1]: Started DHCP Client.
+  Dec 08 21:57:19 nixos dhcpcd[5092]: DUID 00:04:27:4e:4c:75:12:87:43:4a:96:fb:4b:65:e0:bc:c0:c6
+  Dec 08 21:57:19 nixos dhcpcd[5092]: enp3s0: waiting for carrier
+  Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such file or directory
+  Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such file or directory
+  Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such file or directory
+  Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such file or directory
+  Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such process
+  Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such process
+  Dec 08 21:57:49 nixos dhcpcd[5092]: timed out
+  Dec 08 21:57:49 nixos systemd[1]: Started DHCP Client.
   */
   # networking.interfaces.enp3s0.useDHCP = false;
   # networking.interfaces.enp3s0.useDHCP = false;
-  /* networking.interfaces.enp3s0.ipv4.addresses = [{
-    address = "192.168.1.153";
-    prefixLength = 24;
-    }]; */
+  /*
+   networking.interfaces.enp3s0.ipv4.addresses = [{
+  address = "192.168.1.153";
+  prefixLength = 24;
+  }];
+  */
   # soon to be deprecated
   # networking.useDHCP = false;
   networking.useDHCP = false;
   networking.interfaces = {
-    enp3s0.ipv4.addresses = [{
-      address = "192.168.1.153";
-      prefixLength = 24;
-    }];
-    wlan0.ipv4.addresses = [{
-      address = "192.168.10.94";
-      prefixLength = 24;
-    }];
+    enp3s0.ipv4.addresses = [
+      {
+        address = "192.168.1.153";
+        prefixLength = 24;
+      }
+    ];
+    wlan0.ipv4.addresses = [
+      {
+        address = "192.168.10.94";
+        prefixLength = 24;
+      }
+    ];
   };
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
 
-
   # Enable CUPS to print documents.
   services.printing = {
     enable = true;
-    drivers = with pkgs; [ gutenprint samsung-unified-linux-driver splix ];
+    drivers = with pkgs; [gutenprint samsung-unified-linux-driver splix];
   };
 
   security.rtkit.enable = true;
@@ -264,6 +287,7 @@ in
       # "adbusers"
     ];
   };
+  users.defaultUserShell = pkgs.nushell;
 
   nixpkgs.config = {
     allowUnfree = true;
@@ -272,7 +296,7 @@ in
         inherit pkgs;
       };
     };
-    permittedInsecurePackages = [ ];
+    permittedInsecurePackages = [];
   };
   programs.steam.enable = true;
 
@@ -286,14 +310,14 @@ in
   # TODO: find another solution to `org.freedesktop.secrets not provided by any service`
   services.gnome.gnome-keyring.enable = true;
   /*
-    security.pam.services.gnupg.enableGnomeKeyring = true;
-    security.pam.services.gnome-keyring.text = ''
-    auth     optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so
-    session  optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so auto_start
-    password  optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so
-    '';
-  */ # doesn't solve the boot issue
-
+  security.pam.services.gnupg.enableGnomeKeyring = true;
+  security.pam.services.gnome-keyring.text = ''
+  auth     optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so
+  session  optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so auto_start
+  password  optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so
+  '';
+  */
+  # doesn't solve the boot issue
 
   nix = {
     # TODO: check if there are more suitable versions
@@ -307,15 +331,17 @@ in
   };
 
   fonts.fontDir.enable = true;
-  fonts.fonts = [ linja-sike ] ++ (with pkgs; [
-    (nerdfonts.override { fonts = [ "JetBrainsMono" "NerdFontsSymbolsOnly" ]; })
-    line-awesome
-    # dejavu_fonts
-    open-sans
-    libertine
-    ipafont
-    kochi-substitute
-  ]);
+  fonts.fonts =
+    [linja-sike]
+    ++ (with pkgs; [
+      (nerdfonts.override {fonts = ["JetBrainsMono" "NerdFontsSymbolsOnly"];})
+      line-awesome
+      # dejavu_fonts
+      open-sans
+      libertine
+      ipafont
+      kochi-substitute
+    ]);
   # TODO: check
   fonts.fontconfig.defaultFonts = {
     monospace = [
@@ -332,11 +358,13 @@ in
     ];
   };
   environment = {
-    systemPackages = with pkgs; [
-      nvidia-offload
-      virt-manager
-      pinentry-curses
-    ] ++ builtins.attrValues nixcfg;
+    systemPackages = with pkgs;
+      [
+        nvidia-offload
+        virt-manager
+        pinentry-curses
+      ]
+      ++ builtins.attrValues nixcfg;
     variables = {
       EDITOR = "hx";
     };
@@ -345,6 +373,7 @@ in
         exec sway
       fi
     '';
+    shells = with pkgs; [nushell];
   };
 
   # This value determines the NixOS release from which the default

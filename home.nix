@@ -1,8 +1,13 @@
-{ config, pkgs, home-manager, neovim, ... }:
 {
+  config,
+  pkgs,
+  home-manager,
+  neovim,
+  ...
+}: {
   home-manager.useUserPackages = true;
   home-manager.useGlobalPkgs = true;
-  home-manager.users.hofsiedge = { pkgs, ... }: {
+  home-manager.users.hofsiedge = {pkgs, ...}: {
     # TODO: swaylock, swayidle, ly display manager
 
     wayland.windowManager.sway = {
@@ -17,7 +22,7 @@
           };
         };
       };
-      extraOptions = [ "--unsupported-gpu" ];
+      extraOptions = ["--unsupported-gpu"];
       extraConfig = ''
         set $menu bemenu-run
 
@@ -58,73 +63,77 @@
       '';
     };
     home.stateVersion = "22.05";
-    home.packages = with pkgs; [
-      firefox
-      luakit
-      # thunderbird
-      librewolf-wayland
-      tdesktop
-      # discord
+    home.packages = with pkgs;
+      [
+        firefox
+        luakit
+        # thunderbird
+        librewolf-wayland
+        tdesktop
+        # discord
 
-      # TODO: make available only to nnn
-      unzip
-      zip
+        # TODO: make available only to nnn
+        unzip
+        zip
 
-      # nixops
+        # nixops
 
-      libreoffice-fresh
-      # media
-      krita
-      blender
-      mpv
-      inkscape
-      obs-studio
-      godot
-      kdenlive
-      # kicad-small
-      okular
-      # sound & display controls
-      # TODO: use a graph instead (https://github.com/futpib/pagraphcontrol)
-      # TODO: add effects (https://github.com/wwmm/easyeffects)
-      pavucontrol
-      pulseaudio
-      brightnessctl
+        libreoffice-fresh
+        # media
+        krita
+        blender
+        mpv
+        inkscape
+        obs-studio
+        godot
+        kdenlive
+        # kicad-small
+        okular
+        # sound & display controls
+        # TODO: use a graph instead (https://github.com/futpib/pagraphcontrol)
+        # TODO: add effects (https://github.com/wwmm/easyeffects)
+        pavucontrol
+        pulseaudio
+        brightnessctl
 
-      python311
+        python311
+        postman
 
-      # sway modules
-      swaylock
-      swayidle
-      wl-clipboard
-      grim # screenshot
-      slurp # screenshot
-      mako # notifications
-      bemenu # dmenu clone
+        # sway modules
+        swaylock
+        swayidle
+        wl-clipboard
+        grim # screenshot
+        slurp # screenshot
+        mako # notifications
+        bemenu # dmenu clone
 
-      libnotify
+        libnotify
 
-      anki-bin
+        anki-bin
 
-      leafpad
-      gotop
-      tree
+        leafpad
+        gotop
+        tree
+        cloc
 
-      docker-compose
+        docker-compose
 
-      gtypist
+        gtypist
 
-      gtk-engine-murrine
-      libadwaita
-      gtk_engines
-      gsettings-desktop-schemas
-      lxappearance-gtk2
-      graphite-gtk-theme
+        gtk-engine-murrine
+        libadwaita
+        gtk_engines
+        gsettings-desktop-schemas
+        lxappearance-gtk2
+        graphite-gtk-theme
 
-      # Nvidia stuff. FIXME: fine tune for the new hardware
-      egl-wayland
+        # Nvidia stuff. FIXME: fine tune for the new hardware
+        egl-wayland
 
-      pass-wayland
-    ] ++ [ neovim ];
+        pass-wayland
+      ]
+      ++ [neovim];
     # TODO: add helix runtime to ~/.config/helix/runtime
     # ref: https://nix-community.github.io/home-manager/options.html#opt-home.file
     # home.file = {
@@ -136,10 +145,10 @@
     gtk = {
       enable = true;
       /*
-        theme = {
-        name = "Materia-dark";
-        package = pkgs.materia-theme;
-        };
+      theme = {
+      name = "Materia-dark";
+      package = pkgs.materia-theme;
+      };
       */
     };
     programs.wezterm = {
@@ -166,10 +175,22 @@
       '';
     };
 
+    programs.nushell = {
+      enable = true;
+      configFile.text = ''
+      '';
+      environmentVariables = {
+        EDITOR = "hx";
+      };
+    };
+
+    # for those use cases where helix is lacking yet
     programs.vscode = {
-      enable = false;
+      enable = true;
       package = pkgs.vscodium;
-      extensions = with pkgs.vscode-extensions; [ ];
+      extensions = with pkgs.vscode-extensions; [
+        golang.go
+      ];
       userSettings = {
         "workbench.colorTheme" = "Default Dark+";
         "python.defaultInterpreterPath" = "/run/current-system/sw/bin/python";
@@ -183,7 +204,7 @@
       enable = true;
       userName = "Hofsiedge";
       userEmail = "hofsiedge@gmail.com";
-      ignores = [ "*.swp" "*.bin" "*.pyc" "__pycache__" "node_modules" ".nix_node" ];
+      ignores = ["*.swp" "*.bin" "*.pyc" "__pycache__" "node_modules" ".nix_node"];
       extraConfig = {
         init.defaultBranch = "main";
       };
@@ -194,20 +215,44 @@
 
     programs.helix = {
       enable = true;
-      package =
-        let
-          languageServers = with pkgs; [
-            rnix-lsp
-            marksman
-            taplo
-            yaml-language-server
-            python311Packages.python-lsp-server # TODO: pylsp plugins
-          ];
-        in
+      package = let
+        languageServers = with pkgs; [
+          # nix
+          nil
+          alejandra
+
+          # debugger for several languages
+          vscode-extensions.llvm-org.lldb-vscode
+
+          # html
+          rome
+
+          # nickel language server
+          nls
+
+          # zig language server
+          zls
+
+          # elm
+          elmPackages.elm-language-server
+          elmPackages.elm-format # TODO: check if it is default
+
+          # latex
+          texlab
+
+          # TODO: gopls from unstable
+
+          # other
+          marksman
+          taplo
+          yaml-language-server
+          python311Packages.python-lsp-server # TODO: pylsp plugins
+        ];
+      in
         pkgs.symlinkJoin {
           name = "helix";
-          paths = [ pkgs.helix ];
-          buildInputs = [ pkgs.makeWrapper ];
+          paths = [pkgs.helix];
+          buildInputs = [pkgs.makeWrapper];
           postBuild = ''
             wrapProgram $out/bin/hx \
               --prefix PATH : ${pkgs.lib.makeBinPath languageServers}
@@ -218,31 +263,64 @@
         editor = {
           line-number = "relative";
           mouse = false;
+          idle-timeout = 100;
+          completion-trigger-len = 1;
+          rulers = [80 100];
+          bufferline = "always";
+
+          lsp = {
+            display-inlay-hints = true;
+          };
           cursor-shape = {
             insert = "bar";
             normal = "block";
             select = "underline";
           };
+          soft-wrap = {
+            enable = true;
+          };
+        };
+        keys = {
+          normal = {
+            space = {
+              H = ":toggle lsp.display-inlay-hints";
+            };
+          };
         };
       };
       languages = {
-        language = [{
-          name = "nix";
-          auto-format = true;
-          language-server = {
-            command = "rnix-lsp";
-            args = [ "--stdio" ];
-          };
-        }];
+        language = [
+          {
+            name = "nix";
+            auto-format = true;
+            language-server = {
+              # command = "rnix-lsp";
+              # args = [ "--stdio" ];
+              # command = "nixd";
+              # args = [ "--log=verbose" ];
+              command = "nil";
+            };
+            formatter = {
+              command = "alejandra";
+              # args = ["--stdin"];
+            };
+          }
+          {
+            name = "html";
+            auto-format = true;
+            language-server = {
+              command = "rome";
+              args = ["lsp-proxy"];
+            };
+          }
+        ];
       };
     };
-
   };
-  xdg.mime =
-    {
-      enable = true;
-      defaultApplications = {
-        "application/pdf" = "firefox.desktop";
-      };
+  xdg.mime = {
+    enable = true;
+    defaultApplications = {
+      "application/pdf" = "firefox.desktop";
     };
+  };
 }

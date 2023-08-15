@@ -5,8 +5,8 @@ stdenv.mkDerivation rec {
   version = "5.0";
 
   src = fetchurl {
-    url = "https://wyub.github.io/tokipona/linja-sike-5.otf";
-    sha256 = "TJcKIK6byBb9/zyoKHTmhMpOGwHYG/ZPmm72huSO/Yo=";
+    url = "https://lipamanka.gay/linjalipamanka-normal.otf";
+    sha256 = "ZuKxVZKfxePZAjlInTZX9cZ8AXV8O7X6RGDSq+o3s1s=";
   };
 
   phases = "installPhase";

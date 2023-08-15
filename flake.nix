@@ -6,6 +6,11 @@
       url = "github:nix-community/home-manager/release-23.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-index-database = {
+      url = "github:Mic92/nix-index-database";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     neovim = {
       url = "path:/home/hofsiedge/.nixos-config/nvim";
     };
@@ -19,6 +24,7 @@
     self,
     nixpkgs,
     home-manager,
+    nix-index-database,
     ...
   } @ inputs: {
     nixosConfigurations.hofsiedge = nixpkgs.lib.nixosSystem {
@@ -30,6 +36,13 @@
         };
       modules = [
         ./configuration.nix
+        # TODO: move to home-manager
+        # https://github.com/nix-community/nix-index-database#usage-in-home-manager
+        nix-index-database.nixosModules.nix-index
+        {
+          programs.nix-index-database.comma.enable = true;
+          programs.command-not-found.enable = false;
+        }
         {
           # Pin registry so `nix search` doesn't download all the time.
           nix.registry.stale.flake = inputs.nixpkgs;

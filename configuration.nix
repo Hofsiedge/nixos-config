@@ -8,13 +8,6 @@
   ...
 }: let
   linja-sike = pkgs.callPackage ./packages/linja-sike.nix {};
-  nvidia-offload = pkgs.writeShellScriptBin "nvidia-offload" ''
-    export __NV_PRIME_RENDER_OFFLOAD=1
-    export __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0
-    export __GLX_VENDOR_LIBRARY_NAME=nvidia
-    export __VK_LAYER_NV_optimus=NVIDIA_only
-    exec "$@"
-  '';
   nixcfg = let
     cmd = name: body:
       pkgs.writeShellScriptBin "nixcfg-${name}" ''
@@ -47,21 +40,49 @@
         sudo nix-store --verify --check-contents --repair
       '';
     };
-in {
+in rec {
   imports = [
     ./hardware-configuration.nix
     home-manager.nixosModule
     ./home.nix
   ];
 
-  virtualisation.libvirtd = {
+  powerManagement = {
     enable = true;
-    qemu = {
-      ovmf.enable = true;
-      ovmf.packages = with pkgs; [OVMFFull.fd virtiofsd win-virtio];
+    powertop.enable = true;
+  };
+  services.power-profiles-daemon.enable = true;
+  services.thermald.enable = true;
+
+  virtualisation = {
+    docker = rec {
+      enable = true;
+      autoPrune = {
+        enable = true;
+        dates = "weekly";
+      };
+      rootless = {
+        enable = true;
+        setSocketVariable = true;
+        daemon.settings = {
+          dns = ["8.8.8.8"]; # fixes malformed default /etc/resolv.conf
+          # FIXME: Cannot connect to the Docker daemon at unix:///run/user/1000/docker.sock. Is the docker daemon running?
+          # no troubles with sudo
+          # data-root = "${users.users.hofsiedge.home}/media/E/docker";
+        };
+      };
+      daemon.settings = rootless.daemon.settings;
+    };
+
+    libvirtd = {
+      enable = true;
+      qemu = {
+        ovmf.enable = true;
+        ovmf.packages = with pkgs; [OVMFFull.fd virtiofsd win-virtio];
+      };
     };
   };
-  programs.dconf.enable = true;
+  programs.dconf.enable = true; # is it really needed?
 
   /*
    services.samba = {
@@ -83,27 +104,57 @@ in {
   };
   */
 
-  # Use the systemd-boot EFI boot loader.
-  boot.loader.systemd-boot = {
-    enable = true;
-    consoleMode = "max";
+  boot = {
+    supportedFilesystems = ["ntfs"];
+
+    loader = {
+      efi.canTouchEfiVariables = true;
+      systemd-boot = {
+        enable = true;
+        consoleMode = "max";
+      };
+    };
+
+    plymouth = {
+      enable = true;
+      theme = "breeze";
+    };
   };
-  boot.loader.efi.canTouchEfiVariables = true;
-  boot.plymouth.enable = true;
-  boot.plymouth.theme = "breeze";
+
+  fileSystems."/home/hofsiedge/media/E" = {
+    device = "/dev/sda1";
+    fsType = "ntfs-3g";
+    options = ["rw" "uid=1000"];
+  };
 
   # systemd-resolved - resolvconf manager (required by iwd)
   services.resolved.enable = true;
 
   # TODO: fine tune for the new hardware
   services.xserver.videoDrivers = ["nvidia"];
-  hardware.nvidia.package = pkgs.linuxPackages.nvidiaPackages.stable;
-  hardware.nvidia.modesetting.enable = true;
-  hardware.nvidia.prime = {
-    sync.enable = true;
-    nvidiaBusId = "PCI:1:0:0";
-    intelBusId = "PCI:0:2:0";
+  hardware = {
+    nvidia = {
+      package = pkgs.linuxPackages.nvidiaPackages.stable;
+      modesetting.enable = true; # check if needed
+      prime = {
+        # sync.enable = true;
+        offload = {
+          enable = true;
+          enableOffloadCmd = true;
+        };
+        nvidiaBusId = "PCI:1:0:0";
+        intelBusId = "PCI:0:2:0";
+      };
+    };
+    opengl = {
+      enable = true;
+      driSupport = true;
+      extraPackages = with pkgs; [
+        intel-compute-runtime
+      ];
+    };
   };
+
   # services.xserver.libinput.enable = true;
 
   services.udev = let
@@ -117,6 +168,31 @@ in {
     extraRules = ''
       ACTION=="add", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status disabled"
       ACTION=="remove", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status enabled"
+    '';
+  };
+
+  services.postgresql = {
+    enable = true;
+    package = pkgs.postgresql_15;
+    enableTCPIP = true;
+    # port = 5432;
+    # enables local, ipv4 and ipv6 connections
+    authentication = pkgs.lib.mkOverride 10 ''
+      #type database  DBuser  auth-method
+      local all       all     trust
+      # ipv4
+      host  all       all     127.0.0.1/32   trust
+      # ipv6
+      host  all       all     ::1/128        trust
+    '';
+    # allows root and postgres to log in as postgres
+    # others - only as themselves
+    identMap = ''
+      # ArbitraryMapName systemUser DBUser
+      superuser_map      root       postgres
+      superuser_map      postgres   postgres
+      # Let other names login as themselves
+      superuser_map      /^(.*)$    \1
     '';
   };
 
@@ -134,7 +210,7 @@ in {
   #     };
   # };
 
-  networking = {
+  networking = rec {
     wireless = {
       iwd = {
         enable = true;
@@ -265,16 +341,6 @@ in {
   };
   xdg.portal.wlr.enable = true; # enable screen sharing
 
-  hardware.opengl = {
-    enable = true;
-    driSupport = true;
-    extraPackages = with pkgs; [
-      intel-compute-runtime
-    ];
-  };
-
-  virtualisation.docker.enable = true;
-
   users.mutableUsers = true;
   users.users.hofsiedge = {
     isNormalUser = true;
@@ -285,9 +351,10 @@ in {
       "audio"
       "libvirtd"
       # "adbusers"
+      "docker"
     ];
   };
-  users.defaultUserShell = pkgs.nushell;
+  # users.defaultUserShell = pkgs.nushell;
 
   nixpkgs.config = {
     allowUnfree = true;
@@ -360,7 +427,6 @@ in {
   environment = {
     systemPackages = with pkgs;
       [
-        nvidia-offload
         virt-manager
         pinentry-curses
       ]

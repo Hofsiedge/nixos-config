@@ -99,6 +99,10 @@
         python311
         postman
 
+        dbeaver
+        # TODO
+        # jetbrains.pycharm-community
+
         # sway modules
         swaylock
         swayidle
@@ -134,13 +138,7 @@
         pass-wayland
       ]
       ++ [neovim];
-    # TODO: add helix runtime to ~/.config/helix/runtime
-    # ref: https://nix-community.github.io/home-manager/options.html#opt-home.file
-    # home.file = {
-    #   ".config/helix/runtime" = {
-    #     source = ./helix/runtime;
-    #   };
-    # };
+
     programs.home-manager.enable = true;
     gtk = {
       enable = true;
@@ -175,14 +173,14 @@
       '';
     };
 
-    programs.nushell = {
-      enable = true;
-      configFile.text = ''
-      '';
-      environmentVariables = {
-        EDITOR = "hx";
-      };
-    };
+    # programs.nushell = {
+    #   enable = true;
+    #   configFile.text = ''
+    #   '';
+    #   environmentVariables = {
+    #     EDITOR = "hx";
+    #   };
+    # };
 
     # for those use cases where helix is lacking yet
     programs.vscode = {
@@ -224,7 +222,7 @@
           # debugger for several languages
           vscode-extensions.llvm-org.lldb-vscode
 
-          # html
+          # html (FIXME)
           rome
 
           # nickel language server
@@ -313,8 +311,37 @@
               args = ["lsp-proxy"];
             };
           }
+          {
+            name = "go";
+            auto-format = true;
+            config = {
+              "formatting.gofumpt" = true;
+
+              "completion.usePlaceholders" = true;
+
+              "diagnostic.analyses.fieldalignment" = true;
+              "diagnostic.analyses.shadow" = true;
+              "diagnostic.analyses.unusedparams" = true;
+              "diagnostic.analyses.unusedwrite" = true;
+              "diagnostic.analyses.useany" = true;
+              "diagnostic.analyses.unusedvariable" = true;
+              "diagnostic.staticcheck" = true;
+              "diagnostic.vulncheck" = "Imports";
+              "inlayhint.hints" = {
+                assignVariableTypes = true;
+                compositeLiteralFields = true;
+                functionTypeParameters = true;
+                rangeVariableTypes = true;
+              };
+            };
+          }
         ];
       };
+    };
+    home.file.helixExtraRuntime = {
+      target = ".config/helix/runtime";
+      source = ./helix/runtime;
+      recursive = true;
     };
   };
   xdg.mime = {

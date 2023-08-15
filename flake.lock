@@ -3,7 +3,7 @@
     "externalHostsfile": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-sMYEE3AVKUddE8gdzB9LwYUyxEZ1jmOojuakDvyOACE=",
+        "narHash": "sha256-74ZylnYC/oCoZfRsvhL4nEYGrG5pTyysJMstmPipT6c=",
         "type": "file",
         "url": "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts"
       },
@@ -16,12 +16,12 @@
       "flake": false,
       "locked": {
         "lastModified": 1,
-        "narHash": "sha256-rrISHirgmp1AZD22Ogqo6cdrbj9JUBsp6wVq9BiZ6E0=",
-        "path": "/nix/store/ynhzyzaisc04rp3i3krwdh7nkgifyl0n-source/extra_config",
+        "narHash": "sha256-vWdKFLD3gWYJVorART2x0WgjicTkIm/pgJSPI6JbET0=",
+        "path": "/nix/store/61p0p26w4vgchfybd18y8g1amqwcp0iw-source/extra_config",
         "type": "path"
       },
       "original": {
-        "path": "/nix/store/ynhzyzaisc04rp3i3krwdh7nkgifyl0n-source/extra_config",
+        "path": "/nix/store/61p0p26w4vgchfybd18y8g1amqwcp0iw-source/extra_config",
         "type": "path"
       }
     },
@@ -30,11 +30,11 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1685518550,
-        "narHash": "sha256-o2d0KcvaXzTrPRIo0kOLV0/QXHhDQ5DTi+OxcjO8xqY=",
+        "lastModified": 1689068808,
+        "narHash": "sha256-6ixXo3wt24N/melDWjq70UuHQLxGV8jZvooRanIHXw0=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "a1720a10a6cfe8234c0e93907ffe81be440f4cef",
+        "rev": "919d646de7be200f3bf08cb76ae1f09402b6f9b4",
         "type": "github"
       },
       "original": {
@@ -96,8 +96,8 @@
         "plugin:tree-climber": "plugin:tree-climber"
       },
       "locked": {
-        "lastModified": 1686841657,
-        "narHash": "sha256-03pMMGJCE/z4Dwz/tNqNPPEEK3VMMmXsCc7POQFhLfg=",
+        "lastModified": 1690835293,
+        "narHash": "sha256-8zMACUwS79KSme3XSXzoguXkP0IJaloKQTjk/2HGQbM=",
         "path": "/home/hofsiedge/.nixos-config/nvim",
         "type": "path"
       },
@@ -131,13 +131,33 @@
         "type": "github"
       }
     },
+    "nix-index-database": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1691897365,
+        "narHash": "sha256-jvWIU4ht3YAmF8TDVM2Ps2+Gf4MtNGLL1zEWQZdTrzU=",
+        "owner": "Mic92",
+        "repo": "nix-index-database",
+        "rev": "f4d70d098f066a30c7087144063dca179495f7d6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "nix-index-database",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1686582075,
-        "narHash": "sha256-vtflsfKkHtF8IduxDNtbme4cojiqvlvjp5QNYhvoHXc=",
+        "lastModified": 1690753480,
+        "narHash": "sha256-GQgPs8fCh/LsyQoYMUZgT2p7jFVWyHu9p+1Nl/dp8GY=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "7e63eed145566cca98158613f3700515b4009ce3",
+        "rev": "9e06dd56947c1dc3dc837c3149bfe02c71a6edd7",
         "type": "github"
       },
       "original": {
@@ -149,11 +169,11 @@
     },
     "nixpkgs_2": {
       "locked": {
-        "lastModified": 1689209875,
-        "narHash": "sha256-8AVcBV1DiszaZzHFd5iLc8HSLfxRAuqcU0QdfBEF3Ag=",
+        "lastModified": 1691831739,
+        "narHash": "sha256-6e12VCvA7jOjhzJ1adLiUV1GTPXGBcCfhggsDwiuNB4=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "fcc147b1e9358a8386b2c4368bd928e1f63a7df2",
+        "rev": "3fe694c4156b84dac12627685c7ae592a71e2206",
         "type": "github"
       },
       "original": {
@@ -229,11 +249,11 @@
     "plugin:lspconfig": {
       "flake": false,
       "locked": {
-        "lastModified": 1686747753,
-        "narHash": "sha256-arsehgVJP5tAzaPhf93xUAsg5PiVOjpbubyrmjRHL8g=",
+        "lastModified": 1690356683,
+        "narHash": "sha256-Ama9nLC/T1wJWal6bKvgY0ywUUiJ5VLuIxoY1xbJKtY=",
         "owner": "neovim",
         "repo": "nvim-lspconfig",
-        "rev": "295c646488d5baa63c6c4da68fe61171b9257375",
+        "rev": "b6091272422bb0fbd729f7f5d17a56d37499c54f",
         "type": "github"
       },
       "original": {
@@ -245,11 +265,11 @@
     "plugin:navbuddy": {
       "flake": false,
       "locked": {
-        "lastModified": 1685258727,
-        "narHash": "sha256-HE32Jufi/6r9IAKiy6+MiwAvoz1rSYwghDIeXCgTtg0=",
+        "lastModified": 1690773567,
+        "narHash": "sha256-eQr/BWngNLRJvgT+CsZNyPPpMsITTpVM0VwAqKgK3GU=",
         "owner": "SmiteshP",
         "repo": "nvim-navbuddy",
-        "rev": "0db1d62761131ca4d0665423b3f7903532763a77",
+        "rev": "15184582a786d6b32b2724a4799891d0d69f0cdd",
         "type": "github"
       },
       "original": {
@@ -277,11 +297,11 @@
     "plugin:nvim-dap-go": {
       "flake": false,
       "locked": {
-        "lastModified": 1684849022,
-        "narHash": "sha256-yTj8nGmsRFovWl9/b7xeoPZDB491bLToSoO3Ru70nEc=",
+        "lastModified": 1689685925,
+        "narHash": "sha256-SBxLArDO9U5Xm+iE5Sah9UU1zOggOGM2jPqqEPofceQ=",
         "owner": "leoluz",
         "repo": "nvim-dap-go",
-        "rev": "cdf604a5703838f65fdee7c198f6cb59b563ef6f",
+        "rev": "eab43d63cef832801a701812913e4d1d726725e5",
         "type": "github"
       },
       "original": {
@@ -311,6 +331,7 @@
         "externalHostsfile": "externalHostsfile",
         "home-manager": "home-manager",
         "neovim": "neovim",
+        "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs_2",
         "unstable": "unstable"
       }
@@ -332,11 +353,11 @@
     },
     "unstable": {
       "locked": {
-        "lastModified": 1689282004,
-        "narHash": "sha256-VNhuyb10c9SV+3hZOlxwJwzEGytZ31gN9w4nPCnNvdI=",
+        "lastModified": 1691654369,
+        "narHash": "sha256-gSILTEx1jRaJjwZxRlnu3ZwMn1FVNk80qlwiCX8kmpo=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "e74e68449c385db82de3170288a28cd0f608544f",
+        "rev": "ce5e4a6ef2e59d89a971bc434ca8ca222b9c7f5e",
         "type": "github"
       },
       "original": {

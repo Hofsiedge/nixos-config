@@ -3,7 +3,7 @@
     "externalHostsfile": {
       "flake": false,
       "locked": {
-        "narHash": "sha256-Mmh8HVNrL2q9sXi/D2J2NSKPzGxIzOX5OcYXhr4q67k=",
+        "narHash": "sha256-gKkMkenqDvYFC4lbOLvoF1dlqUhd+LINtBX6EBqAqZo=",
         "type": "file",
         "url": "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts"
       },

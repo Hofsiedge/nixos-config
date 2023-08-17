@@ -8,44 +8,34 @@
   ...
 }: let
   linja-sike = pkgs.callPackage ./packages/linja-sike.nix {};
-  nixcfg = let
-    cmd = name: body:
-      pkgs.writeShellScriptBin "nixcfg-${name}" ''
-        pushd /home/hofsiedge/.nixos-config/
-        ${body}
-        popd
-      '';
-  in
-    builtins.mapAttrs cmd {
-      edit = "$EDITOR configuration.nix";
-      switch = "sudo nixos-rebuild switch --flake .#hofsiedge \"$@\"";
-      update = "sudo nix flake update \"$@\"";
-      clean = ''
-        sudo nix-collect-garbage -d
-        sudo nixos-rebuild boot --flake .#hofsiedge "$@"
-      '';
-      # TODO: generalize
-      nvim-offline = ''
-        pushd nvim
-        nix flake lock --update-input extra_config --no-warn-dirty
-        nix build --offline --no-warn-dirty
-        popd
-        sudo nix flake lock --update-input neovim --offline --no-warn-dirty
-        nixcfg-switch "$@"
-      '';
-      search-offline = ''
-        nix search stale --offline "$@"
-      '';
-      repair = ''
-        sudo nix-store --verify --check-contents --repair
-      '';
-    };
 in rec {
   imports = [
     ./hardware-configuration.nix
     home-manager.nixosModule
     ./home.nix
+
+    ./modules/scripts.nix
+    ./modules/nvidia.nix
+    ./modules/devices.nix
   ];
+
+  # nixcfg
+  custom.nixcfg-commands.enable = true;
+  # GPU configuration
+  custom.nvidia.enable = true;
+  # devices
+  custom.devices = {
+    enable = true;
+    extra-drives = [
+      {
+        enable = true;
+        mountPoint = "/home/hofsiedge/media/E";
+        device = "/dev/sda1";
+        fsType = "ntfs-3g";
+        options = ["rw" "uid=1000"];
+      }
+    ];
+  };
 
   powerManagement = {
     enable = true;
@@ -105,8 +95,6 @@ in rec {
   */
 
   boot = {
-    supportedFilesystems = ["ntfs"];
-
     loader = {
       efi.canTouchEfiVariables = true;
       systemd-boot = {
@@ -121,41 +109,8 @@ in rec {
     };
   };
 
-  fileSystems."/home/hofsiedge/media/E" = {
-    device = "/dev/sda1";
-    fsType = "ntfs-3g";
-    options = ["rw" "uid=1000"];
-  };
-
   # systemd-resolved - resolvconf manager (required by iwd)
   services.resolved.enable = true;
-
-  # TODO: fine tune for the new hardware
-  services.xserver.videoDrivers = ["nvidia"];
-  hardware = {
-    nvidia = {
-      package = pkgs.linuxPackages.nvidiaPackages.stable;
-      modesetting.enable = true; # check if needed
-      prime = {
-        # sync.enable = true;
-        offload = {
-          enable = true;
-          enableOffloadCmd = true;
-        };
-        nvidiaBusId = "PCI:1:0:0";
-        intelBusId = "PCI:0:2:0";
-      };
-    };
-    opengl = {
-      enable = true;
-      driSupport = true;
-      extraPackages = with pkgs; [
-        intel-compute-runtime
-      ];
-    };
-  };
-
-  # services.xserver.libinput.enable = true;
 
   services.udev = let
     swaymsg = "/etc/profiles/per-user/hofsiedge/bin/swaymsg";
@@ -425,12 +380,10 @@ in rec {
     ];
   };
   environment = {
-    systemPackages = with pkgs;
-      [
-        virt-manager
-        pinentry-curses
-      ]
-      ++ builtins.attrValues nixcfg;
+    systemPackages = with pkgs; [
+      virt-manager
+      pinentry-curses
+    ];
     variables = {
       EDITOR = "hx";
     };

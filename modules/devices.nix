@@ -2,6 +2,7 @@
 {
   lib,
   config,
+  pkgs,
   ...
 }: let
   cfg = config.custom.devices;
@@ -43,8 +44,47 @@ in {
         };
       });
     };
+    keyboards = lib.mkOption {
+      description = ''
+        keyboards configuration - disable default keyboard while an external
+        one is plugged in.
+        Note: this depends on Sway currently
+      '';
+      type = lib.types.submodule {
+        options = {
+          enable = lib.mkEnableOption "enable external keyboard focusing";
+          defaultKeyboard = lib.mkOption {
+            type = lib.types.str;
+            example = "input 1:1:AT_Translated_Set_2_keyboard";
+          };
+          swaymsgBin = lib.mkOption {
+            type = lib.types.path;
+            example = "/etc/profiles/per-user/hofsiedge/bin/swaymsg";
+          };
+          externalKeyboards = lib.mkOption {
+            description = ''
+              list of external keyboards
+            '';
+            type = lib.types.listOf (lib.types.submodule {
+              options = {
+                enable = lib.mkEnableOption "enable focusing for this keyboard";
+                usbKeyboardId = lib.mkOption {
+                  type = lib.types.str;
+                  # TODO: describe how to obtain this value
+                  # TODO: add bluetooth keyboards configuration as well
+                  description = "USB keyboard id";
+                  example = "4d9/293/1104";
+                };
+              };
+            });
+          };
+        };
+      };
+    };
   };
   config = lib.mkIf cfg.enable {
+    # extra drives
+    # TODO: auto-mount known external drives
     boot = {
       supportedFilesystems = let
         ntfs = lib.lists.optional (
@@ -62,5 +102,20 @@ in {
       })
       cfg.extra-drives
     );
+
+    # external keyboards
+    services.udev.extraRules =
+      lib.mkIf
+      cfg.keyboards.enable (let
+        set_keyboard_status = pkgs.writeShellScriptBin "set_keyboard_status" ''
+          eval "${cfg.keyboards.swaymsgBin} --socket $(ls /run/user/1000/sway-ipc.* | head -n 1) '${cfg.keyboards.defaultKeyboard} events $@'"
+        '';
+        keyboardRules = usb_kb_id: ''
+          ACTION=="add", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status disabled"
+          ACTION=="remove", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status enabled"
+        '';
+        rules = builtins.map (x: keyboardRules x.usbKeyboardId) cfg.keyboards.externalKeyboards;
+      in
+        builtins.concatStringsSep "\n" rules);
   };
 }

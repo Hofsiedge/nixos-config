@@ -35,6 +35,18 @@ in rec {
         options = ["rw" "uid=1000"];
       }
     ];
+    keyboards = {
+      enable = true;
+      defaultKeyboard = "input 1:1:AT_Translated_Set_2_keyboard";
+      swaymsgBin = "/etc/profiles/per-user/hofsiedge/bin/swaymsg";
+      externalKeyboards = [
+        {
+          # Vortex Core keyboard
+          enable = true;
+          usbKeyboardId = "4d9/293/1104";
+        }
+      ];
+    };
   };
 
   powerManagement = {
@@ -111,20 +123,6 @@ in rec {
 
   # systemd-resolved - resolvconf manager (required by iwd)
   services.resolved.enable = true;
-
-  services.udev = let
-    swaymsg = "/etc/profiles/per-user/hofsiedge/bin/swaymsg";
-    laptop_keyboard = "input 1:1:AT_Translated_Set_2_keyboard";
-    set_keyboard_status = pkgs.writeShellScriptBin "set_keyboard_status" ''
-      eval "${swaymsg} --socket $(ls /run/user/1000/sway-ipc.* | head -n 1) '${laptop_keyboard} events $@'"
-    '';
-    usb_kb_id = "4d9/293/1104";
-  in {
-    extraRules = ''
-      ACTION=="add", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status disabled"
-      ACTION=="remove", SUBSYSTEM=="usb", ENV{PRODUCT}=="${usb_kb_id}", ENV{DEVTYPE}=="usb_device", RUN+="${set_keyboard_status}/bin/set_keyboard_status enabled"
-    '';
-  };
 
   services.postgresql = {
     enable = true;

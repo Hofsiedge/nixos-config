@@ -1,10 +1,4 @@
-{
-  config,
-  pkgs,
-  home-manager,
-  neovim,
-  ...
-}: {
+{neovim, ...}: {
   home-manager.useUserPackages = true;
   home-manager.useGlobalPkgs = true;
   home-manager.users.hofsiedge = {pkgs, ...}: {
@@ -66,6 +60,7 @@
     home.packages = with pkgs;
       [
         firefox
+        chromium
         luakit
         # thunderbird
         librewolf-wayland

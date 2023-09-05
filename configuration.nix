@@ -1,14 +1,11 @@
 {
-  config,
   pkgs,
-  lib,
   home-manager,
-  neovim,
   externalHostsfile,
   ...
 }: let
   linja-sike = pkgs.callPackage ./packages/linja-sike.nix {};
-in rec {
+in {
   imports = [
     ./hardware-configuration.nix
     home-manager.nixosModule
@@ -17,6 +14,7 @@ in rec {
     ./modules/scripts.nix
     ./modules/nvidia.nix
     ./modules/devices.nix
+    ./modules/network.nix
   ];
 
   # nixcfg
@@ -46,6 +44,31 @@ in rec {
           usbKeyboardId = "4d9/293/1104";
         }
       ];
+    };
+  };
+  # network settings
+  custom.network = {
+    enable = true;
+    enableWifi = true;
+    hosts = [externalHostsfile];
+    firewall = {
+      enable = true;
+      openPorts = {
+        DS3 = {
+          tcp = ["27015-27030" 27036 27037];
+          udp = [4380 "27000-27031" 27036];
+        };
+        TMNF = rec {
+          tcp = [2350 3450];
+          udp = tcp;
+        };
+        Grafana = {
+          tcp = [3000];
+        };
+        PublicServer = {
+          tcp = [80];
+        };
+      };
     };
   };
 
@@ -85,26 +108,6 @@ in rec {
     };
   };
   programs.dconf.enable = true; # is it really needed?
-
-  /*
-   services.samba = {
-  enable = true;
-  openFirewall = true;
-  shares = {
-  public = {
-  path = "/home/hofsiedge/media/virt/";
-  # public = "yes";
-  browsable = "yes";
-  "read only" = "no";
-  # "guest ok" = "yes";
-  };
-  };
-  /* extraConfig = ''
-  guest account = nobody
-  map to guest = bad user
-  ''; * /
-  };
-  */
 
   boot = {
     loader = {
@@ -149,135 +152,22 @@ in rec {
     '';
   };
 
-  # services.openvpn.servers = {
-  #   client =
-  #     let chdef = cmd: ip: "sudo ip route ${cmd} default via ${ip}";
-  #     in
-  #     {
-  #       config = '' config /home/hofsiedge/Projects/VPN/client.conf '';
-  #       # up = ''${chdef "del" "192.168.1.1"} && ${chdef "add" "10.8.0.1"}'';
-  #       # down = ''${chdef "del" "10.8.0.1"} && ${chdef "add" "192.168.1.1"}'';
-
-  #       # up = "echo nameserver $nameserver | ${pkgs.openresolv}/sbin/resolvconf -m 0 -a $dev";
-  #       # down = "${pkgs.openresolv}/sbin/resolvconf -d $dev";
-  #     };
-  # };
-
-  networking = rec {
-    wireless = {
-      iwd = {
-        enable = true;
-        settings = {
-          General.EnableNetworkConfiguration = true;
-          Network.EnableIPv6 = true;
-        };
-      };
-      networks = {
-        "Shilova_46-56".PreSharedKey = "b1c22c9e43f1a7f8684446b9a68721448b9b89cc105e569ebb144e226260aa6c";
-        "Redmi Note 9 Pro".PreSharedKey = "8774d68bcccf76b4565c832b8308c4a23b937704140ba21fa226d8f3f473057c";
-      };
-    };
-
-    firewall = let
-      reductor = attrs: args:
-        with lib;
-        with builtins;
-          attrsets.genAttrs attrs
-          (name:
-            lists.unique
-            (concatLists (catAttrs name args)));
-      firewallReductor = reductor [
-        "allowedTCPPorts"
-        "allowedUDPPorts"
-        "allowedTCPPortRanges"
-        "allowedUDPPortRanges"
-      ];
-      DS3 = {
-        allowedTCPPorts = [27036 27037];
-        allowedUDPPorts = [4380 27036];
-        allowedTCPPortRanges = [
-          {
-            from = 27015;
-            to = 27030;
-          }
-        ];
-        allowedUDPPortRanges = [
-          {
-            from = 27000;
-            to = 27031;
-          }
-        ];
-      };
-      TMNF = rec {
-        allowedTCPPorts = [2350 3450];
-        allowedUDPPorts = allowedTCPPorts;
-      };
-      # Probably, loki in docker
-      Something = {
-        allowedTCPPorts = [3000];
-      };
-      Prometheus = {
-        allowedTCPPorts = [9090];
-      };
-      VPN = {
-        allowedUDPPorts = [53 1194];
-      };
-      publicHTTP = rec {
-        allowedTCPPorts = [80];
-        allowedUDPPorts = allowedTCPPorts;
-      };
-    in
-      # FIXME: enable = True. Have to find out what ports are blocked that the Kv-243 network requires
-      (firewallReductor [TMNF DS3 Something VPN Prometheus publicHTTP]) // {enable = false;};
-
-    extraHosts = builtins.readFile externalHostsfile.outPath;
-  };
-
   # Set your time zone.
   time.timeZone = "Europe/Moscow";
 
-  # Ethernet port auto config
-  # FIXME
-  /*
-  Dec 08 21:57:19 nixos dhcpcd[5092]: DUID 00:04:27:4e:4c:75:12:87:43:4a:96:fb:4b:65:e0:bc:c0:c6
-  Dec 08 21:57:19 nixos dhcpcd[5092]: enp3s0: waiting for carrier
-  Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such file or directory
-  Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such file or directory
-  Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such file or directory
-  Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such file or directory
-  Dec 08 21:57:45 nixos dhcpcd[5089]: ps_root_dispatch: No such process
-  Dec 08 21:57:45 nixos dhcpcd[5092]: ps_root_dispatch: No such process
-  Dec 08 21:57:49 nixos dhcpcd[5092]: timed out
-  Dec 08 21:57:49 nixos systemd[1]: Started DHCP Client.
-  */
-  # networking.interfaces.enp3s0.useDHCP = false;
-  # networking.interfaces.enp3s0.useDHCP = false;
-  /*
-   networking.interfaces.enp3s0.ipv4.addresses = [{
-  address = "192.168.1.153";
-  prefixLength = 24;
-  }];
-  */
-  # soon to be deprecated
-  # networking.useDHCP = false;
-  networking.useDHCP = false;
-  networking.interfaces = {
-    enp3s0.ipv4.addresses = [
-      {
-        address = "192.168.1.153";
-        prefixLength = 24;
-      }
-    ];
-    wlan0.ipv4.addresses = [
-      {
-        address = "192.168.10.94";
-        prefixLength = 24;
-      }
-    ];
-  };
-
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
+  i18n.extraLocaleSettings = {
+    LC_ADDRESS = "ru_RU.UTF-8";
+    LC_IDENTIFICATION = "ru_RU.UTF-8";
+    LC_MEASUREMENT = "ru_RU.UTF-8";
+    LC_MONETARY = "ru_RU.UTF-8";
+    LC_NAME = "ru_RU.UTF-8";
+    LC_NUMERIC = "ru_RU.UTF-8";
+    LC_PAPER = "ru_RU.UTF-8";
+    LC_TELEPHONE = "ru_RU.UTF-8";
+    LC_TIME = "ru_RU.UTF-8";
+  };
 
   # Enable CUPS to print documents.
   services.printing = {
@@ -303,11 +193,9 @@ in rec {
       "video" # Brightness control
       "audio"
       "libvirtd"
-      # "adbusers"
       "docker"
     ];
   };
-  # users.defaultUserShell = pkgs.nushell;
 
   nixpkgs.config = {
     allowUnfree = true;
@@ -320,8 +208,6 @@ in rec {
   };
   programs.steam.enable = true;
 
-  # programs.adb.enable = true;
-
   # GnuPG
   programs.gnupg.agent = {
     enable = true;
@@ -329,15 +215,6 @@ in rec {
   services.pcscd.enable = true;
   # TODO: find another solution to `org.freedesktop.secrets not provided by any service`
   services.gnome.gnome-keyring.enable = true;
-  /*
-  security.pam.services.gnupg.enableGnomeKeyring = true;
-  security.pam.services.gnome-keyring.text = ''
-  auth     optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so
-  session  optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so auto_start
-  password  optional    ${pkgs.gnome.gnome-keyring}/lib/security/pam_gnome_keyring.so
-  '';
-  */
-  # doesn't solve the boot issue
 
   nix = {
     # TODO: check if there are more suitable versions
@@ -387,10 +264,9 @@ in rec {
     };
     loginShellInit = ''
       if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
-        exec sway
+        exec sway || echo "could not start sway: not found"
       fi
     '';
-    shells = with pkgs; [nushell];
   };
 
   # This value determines the NixOS release from which the default

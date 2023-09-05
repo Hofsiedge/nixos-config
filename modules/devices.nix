@@ -1,4 +1,3 @@
-# TODO: keyboard udev rules
 {
   lib,
   config,
@@ -9,13 +8,13 @@
 in {
   imports = [];
   options.custom.devices = {
-    enable = lib.mkEnableOption "enable device-specific settings";
+    enable = lib.mkEnableOption "device-specific settings";
     extra-drives = lib.mkOption {
       type = lib.types.listOf (lib.types.submodule {
         options = {
           enable =
             lib.mkEnableOption
-            "enable auto-mounting (on start) of an internal drive";
+            "auto-mounting (on start) of an internal drive";
           mountPoint = lib.mkOption {
             type = lib.types.path;
             # TODO: ensure target dir exists
@@ -36,7 +35,7 @@ in {
             description = "filesystem type";
           };
           options = lib.mkOption {
-            type = lib.types.listOf lib.types.str;
+            type = lib.types.listOf lib.types.nonEmptyStr;
             default = [];
             example = ["rw" "uid=1000"];
             description = "extra options for the filesystem";
@@ -52,9 +51,9 @@ in {
       '';
       type = lib.types.submodule {
         options = {
-          enable = lib.mkEnableOption "enable external keyboard focusing";
+          enable = lib.mkEnableOption "external keyboard focusing";
           defaultKeyboard = lib.mkOption {
-            type = lib.types.str;
+            type = lib.types.nonEmptyStr;
             example = "input 1:1:AT_Translated_Set_2_keyboard";
           };
           swaymsgBin = lib.mkOption {
@@ -67,9 +66,9 @@ in {
             '';
             type = lib.types.listOf (lib.types.submodule {
               options = {
-                enable = lib.mkEnableOption "enable focusing for this keyboard";
+                enable = lib.mkEnableOption "focusing for this keyboard";
                 usbKeyboardId = lib.mkOption {
-                  type = lib.types.str;
+                  type = lib.types.nonEmptyStr;
                   # TODO: describe how to obtain this value
                   # TODO: add bluetooth keyboards configuration as well
                   description = "USB keyboard id";

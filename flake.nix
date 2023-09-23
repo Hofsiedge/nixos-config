@@ -36,6 +36,13 @@
         };
       modules = [
         ./configuration.nix
+        home-manager.nixosModules.home-manager
+        {
+          home-manager.useUserPackages = true;
+          home-manager.useGlobalPkgs = true;
+          home-manager.users.hofsiedge = import ./home/home.nix inputs.neovim.packages.x86_64-linux.neovim;
+        }
+
         # TODO: move to home-manager
         # https://github.com/nix-community/nix-index-database#usage-in-home-manager
         nix-index-database.nixosModules.nix-index

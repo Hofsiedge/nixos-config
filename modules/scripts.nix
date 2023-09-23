@@ -39,7 +39,7 @@
 in {
   imports = [];
   options.custom.nixcfg-commands = {
-    enable = lib.mkEnableOption "enable nixcfg-... commands";
+    enable = lib.mkEnableOption "nixcfg-... commands";
   };
   config = lib.mkIf config.custom.nixcfg-commands.enable {
     environment.systemPackages = builtins.attrValues nixcfg;

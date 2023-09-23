@@ -1,6 +1,6 @@
 {
   pkgs,
-  home-manager,
+  # home-manager,
   externalHostsfile,
   ...
 }: let
@@ -8,8 +8,6 @@
 in {
   imports = [
     ./hardware-configuration.nix
-    home-manager.nixosModule
-    ./home.nix
 
     ./modules/scripts.nix
     ./modules/nvidia.nix
@@ -84,7 +82,7 @@ in {
       enable = true;
       autoPrune = {
         enable = true;
-        dates = "weekly";
+        dates = "daily";
       };
       rootless = {
         enable = true;
@@ -261,6 +259,7 @@ in {
     ];
     variables = {
       EDITOR = "hx";
+      # NNN_FIFO = "/tmp/nnn.fifo";
     };
     loginShellInit = ''
       if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then

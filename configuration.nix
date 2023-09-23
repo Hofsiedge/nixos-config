@@ -257,10 +257,6 @@ in {
       virt-manager
       pinentry-curses
     ];
-    variables = {
-      EDITOR = "hx";
-      # NNN_FIFO = "/tmp/nnn.fifo";
-    };
     loginShellInit = ''
       if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
         exec sway || echo "could not start sway: not found"

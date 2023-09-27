@@ -1,8 +1,14 @@
-neovim: {pkgs, ...}: {
+{pkgs, ...} @ inputs: {
   imports = [
     ./modules/nnn
     ./modules/helix
   ];
+
+  # add unstable and helix-nightly to submodule arguments
+  _module.args = {
+    inherit (inputs) unstable;
+    inherit (inputs) helix-nightly;
+  };
 
   custom = {
     nnn.enable = true;
@@ -67,81 +73,80 @@ neovim: {pkgs, ...}: {
     '';
   };
   home.stateVersion = "22.05";
-  home.packages = with pkgs;
-    [
-      firefox
-      chromium
-      luakit
-      # thunderbird
-      librewolf-wayland
-      tdesktop
-      # discord
+  home.packages = with pkgs; [
+    firefox
+    chromium
+    luakit
+    # thunderbird
+    librewolf-wayland
+    tdesktop
+    # discord
 
-      # nixops
+    # nixops
 
-      libreoffice-fresh
-      # media
-      krita
-      blender
-      mpv
-      inkscape
-      obs-studio
-      godot
-      kdenlive
-      # kicad-small
-      okular
-      typst
+    libreoffice-fresh
+    # media
+    krita
+    blender
+    mpv
+    inkscape
+    obs-studio
+    godot
+    kdenlive
+    # kicad-small
+    okular
+    typst
 
-      zettlr
-      # sound & display controls
-      # TODO: use a graph instead (https://github.com/futpib/pagraphcontrol)
-      # TODO: add effects (https://github.com/wwmm/easyeffects)
-      pavucontrol
-      pulseaudio
-      brightnessctl
+    zettlr
+    # sound & display controls
+    # TODO: use a graph instead (https://github.com/futpib/pagraphcontrol)
+    # TODO: add effects (https://github.com/wwmm/easyeffects)
+    pavucontrol
+    pulseaudio
+    brightnessctl
 
-      python311
-      postman
+    python311
+    postman
 
-      dbeaver
-      # TODO
-      # jetbrains.pycharm-community
+    dbeaver
+    # TODO
+    # jetbrains.pycharm-community
 
-      # sway modules
-      swaylock
-      swayidle
-      wl-clipboard
-      grim # screenshot
-      slurp # screenshot
-      mako # notifications
-      bemenu # dmenu clone
+    # sway modules
+    swaylock
+    swayidle
+    wl-clipboard
+    grim # screenshot
+    slurp # screenshot
+    mako # notifications
+    bemenu # dmenu clone
 
-      libnotify
+    libnotify
 
-      anki-bin
+    anki-bin
 
-      leafpad
-      gotop
-      tree
-      cloc
+    leafpad
+    gotop
+    tree
+    cloc
 
-      docker-compose
+    docker-compose
 
-      gtypist
+    gtypist
 
-      gtk-engine-murrine
-      libadwaita
-      gtk_engines
-      gsettings-desktop-schemas
-      lxappearance-gtk2
-      graphite-gtk-theme
+    gtk-engine-murrine
+    libadwaita
+    gtk_engines
+    gsettings-desktop-schemas
+    lxappearance-gtk2
+    graphite-gtk-theme
 
-      # Nvidia stuff. FIXME: fine tune for the new hardware
-      egl-wayland
+    # Nvidia stuff. FIXME: fine tune for the new hardware
+    egl-wayland
 
-      pass-wayland
-    ]
-    ++ [neovim];
+    pass-wayland
+  ];
+  # ++ [neovim];
 
   programs.home-manager.enable = true;
   gtk = {

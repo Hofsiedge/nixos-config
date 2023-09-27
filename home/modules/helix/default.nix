@@ -1,4 +1,6 @@
 {
+  helix-nightly,
+  unstable,
   config,
   pkgs,
   lib,
@@ -48,13 +50,29 @@ in {
           marksman
           taplo
           yaml-language-server
-          python311Packages.python-lsp-server # TODO: pylsp plugins
+
+          # python
+          unstable.python311Packages.python-lsp-server
+          unstable.ruff-lsp
+          unstable.python311Packages.yapf
+          unstable.python311Packages.pylsp-mypy
+
+          # go
+          unstable.go_1_21
+          unstable.gopls
+          unstable.delve
+          unstable.gotools
+          unstable.go-tools
+          unstable.golangci-lint
+          unstable.golangci-lint-langserver
         ];
       in
         pkgs.symlinkJoin {
           name = "helix";
-          paths = [pkgs.helix];
+          # paths = [unstable.helix];
+          paths = [helix-nightly];
           buildInputs = [pkgs.makeWrapper];
+          # TODO: why not just add languageServers to paths?
           postBuild = ''
             wrapProgram $out/bin/hx \
               --prefix PATH : ${pkgs.lib.makeBinPath languageServers}
@@ -91,53 +109,76 @@ in {
         };
       };
       languages = {
+        language-server = {
+          # python
+          ruff-lsp.command = "ruff-lsp";
+          pylsp.command = "pylsp";
+          # go
+          gopls = {
+            command = "gopls";
+            config = {
+              "formatting.gofumpt" = true;
+              "ui.completion.usePlaceholders" = true;
+              "ui.diagnostic.analyses" = {
+                fieldalignment = true;
+                shadow = true;
+                unusedparams = true;
+                unusedwrite = true;
+                useany = true;
+                unusedvariable = true;
+              };
+              # "ui.diagnostic.staticcheck" = true;
+              "ui.diagnostic.vulncheck" = "Imports";
+              "ui.inlayhint.hints" = {
+                assignVariableTypes = true;
+                compositeLiteralFields = true;
+                constantValues = true;
+                functionTypeParameters = true;
+                parameterNames = true;
+                rangeVariableTypes = true;
+              };
+            };
+          };
+          golangci-lint-langserver = {
+            command = "golangci-lint-langserver";
+            config.command = [
+              "golangci-lint"
+              "run"
+              "--out-format"
+              "json"
+              "--issues-exit-code=1"
+            ];
+          };
+        };
         language = [
           {
             name = "nix";
             auto-format = true;
-            language-server = {
-              # command = "rnix-lsp";
-              # args = [ "--stdio" ];
-              # command = "nixd";
-              # args = [ "--log=verbose" ];
-              command = "nil";
-            };
-            formatter = {
-              command = "alejandra";
-              # args = ["--stdin"];
-            };
+            formatter.command = "alejandra";
           }
           {
             name = "html";
             auto-format = true;
-            language-server = {
-              command = "rome";
-              args = ["lsp-proxy"];
-            };
+            # language-servers = [
+            #   {
+            #     command = "rome";
+            #     args = ["lsp-proxy"];
+            #   }
+            # ];
           }
           {
             name = "go";
             auto-format = true;
-            config = {
-              "formatting.gofumpt" = true;
-
-              "completion.usePlaceholders" = true;
-
-              "diagnostic.analyses.fieldalignment" = true;
-              "diagnostic.analyses.shadow" = true;
-              "diagnostic.analyses.unusedparams" = true;
-              "diagnostic.analyses.unusedwrite" = true;
-              "diagnostic.analyses.useany" = true;
-              "diagnostic.analyses.unusedvariable" = true;
-              "diagnostic.staticcheck" = true;
-              "diagnostic.vulncheck" = "Imports";
-              "inlayhint.hints" = {
-                assignVariableTypes = true;
-                compositeLiteralFields = true;
-                functionTypeParameters = true;
-                rangeVariableTypes = true;
-              };
-            };
+            language-servers = ["gopls" "golangci-lint-langserver"];
+          }
+          {
+            name = "python";
+            auto-format = true;
+            language-servers = [
+              "pylsp"
+              "ruff-lsp"
+            ];
+            formatter.command = "yapf";
           }
         ];
       };

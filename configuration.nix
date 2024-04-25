@@ -44,6 +44,9 @@ in {
     };
   };
   # network settings
+  networking.extraHosts = ''
+    192.168.1.52 lanlocalhost.home
+  '';
   custom.network = {
     enable = true;
     enableWifi = true;
@@ -79,6 +82,8 @@ in {
   virtualisation = {
     docker = rec {
       enable = true;
+      # NOTE: nvidia runtime is only available with sudo
+      enableNvidia = true;
       autoPrune = {
         enable = true;
         dates = "daily";
@@ -112,11 +117,12 @@ in {
       systemd-boot = {
         enable = true;
         consoleMode = "max";
+        memtest86.enable = true;
       };
     };
 
     plymouth = {
-      enable = true;
+      enable = false;
       theme = "breeze";
     };
   };
@@ -125,7 +131,7 @@ in {
   services.resolved.enable = true;
 
   services.postgresql = {
-    enable = true;
+    enable = false;
     package = pkgs.postgresql_15;
     enableTCPIP = true;
     # port = 5432;
@@ -179,7 +185,10 @@ in {
     alsa.support32Bit = true;
     pulse.enable = true;
   };
-  xdg.portal.wlr.enable = true; # enable screen sharing
+  xdg.portal = {
+    config.common.default = ["gtk"];
+    wlr.enable = true; # enable screen sharing
+  };
 
   users.mutableUsers = true;
   users.users.hofsiedge = {
@@ -205,6 +214,8 @@ in {
   };
   programs.steam.enable = true;
 
+  programs.nix-ld.enable = true;
+
   # GnuPG
   programs.gnupg.agent = {
     enable = true;
@@ -225,30 +236,34 @@ in {
   };
 
   fonts.fontDir.enable = true;
-  fonts.fonts =
+  fonts.packages =
     [linja-sike]
     ++ (with pkgs; [
       (nerdfonts.override {fonts = ["JetBrainsMono" "NerdFontsSymbolsOnly"];})
       line-awesome
-      # dejavu_fonts
       open-sans
       libertine
       ipafont
       kochi-substitute
+      freefont_ttf
+      # dejavu_fonts
     ]);
   # TODO: check
   fonts.fontconfig.defaultFonts = {
     monospace = [
       "JetBrainsMono Nerd Font Mono"
       "IPAGothic"
+      "FreeMono"
     ];
     sansSerif = [
       "Open Sans"
       "IPAGothic"
+      "FreeSans"
     ];
     serif = [
       "Linux Libertine O"
       "IPAMincho"
+      "FreeSerif"
     ];
   };
   environment = {

@@ -11,29 +11,37 @@
         ${body}
         popd
       '';
+    notify = msg: ''notify-send -t 5000 nixcfg "${msg}" '';
   in
     builtins.mapAttrs cmd {
       edit = "$EDITOR configuration.nix";
-      switch = "sudo nixos-rebuild switch --flake .#hofsiedge \"$@\"";
-      update = "sudo nix flake update \"$@\"";
+      switch = ''
+        sudo nixos-rebuild switch --flake .#hofsiedge "$@" \
+          && ${notify "switch: ok"} \
+          && nix profile diff-closures --profile /nix/var/nix/profiles/system \
+          || ${notify "switch: error"}
+      '';
+      update = ''
+        sudo nix flake update "$@" \
+          && ${notify "update: ok"} \
+          || ${notify "update: error"}
+      '';
       clean = ''
         sudo nix-collect-garbage -d
         sudo nixos-rebuild boot --flake .#hofsiedge "$@"
       '';
-      # TODO: generalize
-      nvim-offline = ''
-        pushd nvim
-        nix flake lock --update-input extra_config --no-warn-dirty
-        nix build --offline --no-warn-dirty
-        popd
-        sudo nix flake lock --update-input neovim --offline --no-warn-dirty
-        nixcfg-switch "$@"
-      '';
-      search-offline = ''
-        nix search stale --offline "$@"
-      '';
+      # nvim-offline = ''
+      #   pushd nvim
+      #   nix flake lock --update-input extra_config --no-warn-dirty
+      #   nix build --offline --no-warn-dirty
+      #   popd
+      #   sudo nix flake lock --update-input neovim --offline --no-warn-dirty
+      #   nixcfg-switch "$@"
+      # '';
       repair = ''
-        sudo nix-store --verify --check-contents --repair
+        sudo nix-store --verify --check-contents --repair \
+          && ${notify "repair: ok"} \
+          || ${notify "repair: error"}
       '';
     };
 in {

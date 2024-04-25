@@ -1,13 +1,16 @@
-{pkgs, ...} @ inputs: {
+{
+  pkgs,
+  unstable,
+  ...
+} @ inputs: {
   imports = [
     ./modules/nnn
     ./modules/helix
   ];
 
-  # add unstable and helix-nightly to submodule arguments
+  # add unstable and tree-sitter-idris to submodule arguments
   _module.args = {
-    inherit (inputs) unstable;
-    inherit (inputs) helix-nightly;
+    inherit (inputs) unstable tree-sitter-idris;
   };
 
   custom = {
@@ -31,6 +34,7 @@
           bg = "/home/hofsiedge/Wallpapers/great_wave_off_kanagawa-starry_night.jpg fill";
         };
       };
+      # bars = [{fonts.size = 15.0;}];
     };
     extraOptions = ["--unsupported-gpu"];
     extraConfig = ''
@@ -74,13 +78,13 @@
   };
   home.stateVersion = "22.05";
   home.packages = with pkgs; [
-    firefox
+    nvd # nix diffs
+
     chromium
     luakit
-    # thunderbird
     librewolf-wayland
-    tdesktop
-    # discord
+    unstable.telegram-desktop
+    unstable.fluffychat
 
     # nixops
 
@@ -91,13 +95,13 @@
     mpv
     inkscape
     obs-studio
-    godot
+    godot_4
     kdenlive
-    # kicad-small
+    kicad-small
     okular
     typst
 
-    zettlr
+    # zettlr
     # sound & display controls
     # TODO: use a graph instead (https://github.com/futpib/pagraphcontrol)
     # TODO: add effects (https://github.com/wwmm/easyeffects)
@@ -105,10 +109,12 @@
     pulseaudio
     brightnessctl
 
-    python311
-    postman
+    (python311.withPackages (ps:
+      with ps; [
+        requests
+      ]))
 
-    dbeaver
+    unstable.dbeaver
     # TODO
     # jetbrains.pycharm-community
 
@@ -123,12 +129,16 @@
 
     libnotify
 
+    # preview Markdown
+    python311Packages.grip
+
     anki-bin
 
     leafpad
     gotop
     tree
     cloc
+    jq
 
     docker-compose
 
@@ -145,6 +155,14 @@
     egl-wayland
 
     pass-wayland
+
+    unstable.anydesk
+
+    (pkgs.writeShellScriptBin "go-playground" ''
+      pushd /home/hofsiedge/Projects/go-playground
+      nix develop --offline --command $EDITOR code.go
+      popd
+    '')
   ];
   # ++ [neovim];
 
@@ -160,8 +178,6 @@
   };
   programs.wezterm = {
     enable = true;
-    # TODO: check whether this is still an issue
-    # this causes recompilation for whatever reason... too bad
     extraConfig = ''
       local wezterm = require 'wezterm'
       return {
@@ -169,8 +185,9 @@
         -- color_scheme = "MaterialDesignColors",
         color_scheme = "Dark Pastel",
         font_size = 14.1,
-        font = wezterm.font {
-          family = 'JetBrains Mono',
+        font = wezterm.font_with_fallback {
+          'JetBrains Mono',
+          'FreeMono',
         },
         window_padding = {
           left = 0,
@@ -180,6 +197,56 @@
         },
       }
     '';
+  };
+
+  programs.lazygit.enable = true;
+
+  programs.firefox = {
+    enable = true;
+    package = unstable.firefox;
+    profiles.hofsiedge = {
+      extensions = with inputs.firefox-addons; [
+        # vimium-c
+        # ublock-origin
+        # ublacklist
+        # youtube-shorts-block
+      ];
+      search = {
+        engines = {
+          "Nix Packages" = {
+            urls = [
+              {
+                template = "https://search.nixos.org/packages";
+                params = [
+                  {
+                    name = "type";
+                    value = "packages";
+                  }
+                  {
+                    name = "query";
+                    value = "{searchTerms}";
+                  }
+                ];
+              }
+            ];
+
+            icon = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
+            definedAliases = ["@np"];
+          };
+
+          "NixOS Wiki" = {
+            urls = [{template = "https://nixos.wiki/index.php?search={searchTerms}";}];
+            iconUpdateURL = "https://nixos.wiki/favicon.png";
+            updateInterval = 24 * 60 * 60 * 1000; # every day
+            definedAliases = ["@nw"];
+          };
+
+          "Bing".metaData.hidden = true;
+          "Google".metaData.alias = "@g";
+        };
+        force = true;
+      };
+    };
   };
 
   # programs.nushell = {
@@ -208,7 +275,15 @@
     enable = true;
     userName = "Hofsiedge";
     userEmail = "hofsiedge@gmail.com";
-    ignores = ["*.swp" "*.bin" "*.pyc" "__pycache__" "node_modules" ".nix_node"];
+    ignores = [
+      "*.swp"
+      "*.bin"
+      "*.pyc"
+      "__pycache__"
+      "node_modules"
+      ".nix_node"
+      ".nix_go"
+    ];
     extraConfig = {
       init.defaultBranch = "main";
     };
@@ -217,6 +292,7 @@
     enable = true;
     bashrcExtra = ''
       export XDG_DATA_HOME="$HOME/.local/share"
+      export PS1="\n(''${name:-sys-env}) \[\033[1;32m\][\[\e]0;\u@\h: \w\a\]\u@\h:\w]\n\$\[\033[0m\] "
     '';
   };
 
@@ -224,6 +300,14 @@
     enable = true;
     defaultApplications = {
       "application/pdf" = "firefox.desktop";
+      "x-scheme-handler/http" = "firefox.desktop";
+      "x-scheme-handler/https" = "firefox.desktop";
+      "text/html" = "firefox.desktop";
+      "application/xhtml+xml" = "firefox.desktop";
+      "application/xhtml_xml" = "firefox.desktop";
+      # "x-scheme-handler/tg" = "org.telegram.desktop.desktop";
+      # TODO: check that the above comment does not reappear
+      "x-scheme-handler/tg" = "telegram.desktop";
     };
   };
 }

@@ -1,22 +1,28 @@
 {
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-23.05";
-    unstable.url = "nixpkgs/nixos-unstable";
+    nixpkgs.url = "nixpkgs/nixos-23.11"; # stable
+    unstable.url = "nixpkgs/nixos-unstable"; # unstable
+    unstable-small.url = "nixpkgs/nixos-unstable-small"; # even more unstable
+
     home-manager = {
-      url = "github:nix-community/home-manager/release-23.05";
+      url = "github:nix-community/home-manager/release-23.11";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-index-database = {
       url = "github:Mic92/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    firefox-addons = {
+      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
-    neovim.url = "path:/home/hofsiedge/.nixos-config/nvim";
-    helix.url = "github:helix-editor/helix";
     externalHostsfile = {
       url = "https://github.com/StevenBlack/hosts/raw/master/alternates/fakenews-gambling-porn/hosts";
       flake = false;
     };
+
+    tree-sitter-idris.url = "path:/home/hofsiedge/Projects/Idris2/tree-sitter-idris";
   };
 
   outputs = {
@@ -31,15 +37,26 @@
       specialArgs =
         inputs
         // {
-          inherit (inputs.neovim.packages.x86_64-linux) neovim;
-          helix-nightly = inputs.helix.packages.x86_64-linux.helix;
-          unstable = inputs.unstable.legacyPackages.${system};
+          inherit (inputs.neovim.packages.${system}) neovim;
+          unstable = import inputs.unstable {
+            inherit system;
+            config.allowUnfree = true;
+          };
+          firefox-addons = inputs.firefox-addons.packages.${system};
+          tree-sitter-idris = inputs.tree-sitter-idris.packages.${system};
         };
       modules = [
         {
-          # Pin registry so `nix search` doesn't download all the time.
-          nix.registry.stale.flake = inputs.nixpkgs;
-          nix.registry.unstable.flake = inputs.unstable;
+          # registries for `nix search`
+          nix.registry = {
+            # Pin registries so `nix search` doesn't download all the time.
+            stale.flake = inputs.nixpkgs;
+            unstable.flake = inputs.unstable;
+            rolling.flake = inputs.unstable-small;
+
+            # BUG: `nix search` does not understand that `flake.nix` is in a subdir
+            firefox-addons.flake = inputs.firefox-addons;
+          };
         }
         ./configuration.nix
         home-manager.nixosModules.home-manager

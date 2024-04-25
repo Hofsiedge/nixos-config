@@ -1,6 +1,6 @@
 {
-  helix-nightly,
   unstable,
+  tree-sitter-idris,
   config,
   pkgs,
   lib,
@@ -29,7 +29,7 @@ in {
           vscode-extensions.llvm-org.lldb-vscode
 
           # html (FIXME)
-          rome
+          # rome
 
           # nickel language server
           nls
@@ -44,8 +44,6 @@ in {
           # latex
           texlab
 
-          # TODO: gopls from unstable
-
           # other
           marksman
           taplo
@@ -56,21 +54,46 @@ in {
           unstable.ruff-lsp
           unstable.python311Packages.yapf
           unstable.python311Packages.pylsp-mypy
+          # unstable.python311Packages.debugpy # TODO
+          # issue: https://github.com/helix-editor/helix/issues/5079
+          # issue: https://github.com/helix-editor/helix/issues/6265
 
           # go
-          unstable.go_1_21
+          unstable.go_1_22
           unstable.gopls
           unstable.delve
           unstable.gotools
           unstable.go-tools
           unstable.golangci-lint
           unstable.golangci-lint-langserver
+
+          # postgresql
+          unstable.postgres-lsp
+          unstable.pgformatter
+          # unstable.sqlfluff
+
+          # js / ts
+          unstable.javascript-typescript-langserver
         ];
       in
         pkgs.symlinkJoin {
           name = "helix";
-          # paths = [unstable.helix];
-          paths = [helix-nightly];
+          paths = [
+            unstable.helix
+            # helix ignores this for whatever reason
+            /*
+            (pkgs.stdenv.mkDerivation {
+              name = "helix-tree-sitter-idris";
+              src = tree-sitter-idris.tree-sitter-idris;
+              buildPhase = "";
+              installPhase = ''
+                mkdir -p $out/lib/runtime/{grammars,queries/idris}
+                cp parser $out/lib/runtime/grammars/idris.so
+                cp -r queries/* $out/lib/runtime/queries/idris
+              '';
+            })
+            */
+          ];
           buildInputs = [pkgs.makeWrapper];
           # TODO: why not just add languageServers to paths?
           postBuild = ''
@@ -127,7 +150,6 @@ in {
                 useany = true;
                 unusedvariable = true;
               };
-              # "ui.diagnostic.staticcheck" = true;
               "ui.diagnostic.vulncheck" = "Imports";
               "ui.inlayhint.hints" = {
                 assignVariableTypes = true;
@@ -149,12 +171,61 @@ in {
               "--issues-exit-code=1"
             ];
           };
+          # yaml
+          yaml-language-server = {
+            command = "yaml-language-server";
+            args = ["--stdio"];
+            config = {
+              yaml = {
+                keyOrdering = true;
+                schemas = {
+                  # "TODO: OpenAPI 3.0 instead of 3.1" = "/openapi.yaml";
+                };
+              };
+            };
+          };
+          # postgresql
+          postgres_lsp = {
+            command = "postgres_lsp";
+          };
+
+          # astro
+          astro-ls = {
+            command = "astro-ls";
+            args = ["--stdio"];
+          };
+
+          # js / ts
+          javascript-typescript-langserver = {
+            command = "javascript-typesctipt-stdio";
+          };
         };
         language = [
+          {
+            name = "idris";
+            scope = "source.idris";
+            injection-regex = "idris";
+            file-types = ["idr"];
+            shebangs = [];
+            comment-token = "--";
+            block-comment-tokens = {
+              start = "{-";
+              end = "-}";
+            };
+            indent = {
+              tab-width = 2;
+              unit = "  ";
+            };
+            language-servers = ["idris2-lsp"];
+          }
           {
             name = "nix";
             auto-format = true;
             formatter.command = "alejandra";
+          }
+          {
+            name = "c";
+            auto-format = true;
           }
           {
             name = "html";
@@ -169,7 +240,10 @@ in {
           {
             name = "go";
             auto-format = true;
-            language-servers = ["gopls" "golangci-lint-langserver"];
+            language-servers = [
+              "gopls"
+              "golangci-lint-langserver"
+            ];
           }
           {
             name = "python";
@@ -179,14 +253,62 @@ in {
               "ruff-lsp"
             ];
             formatter.command = "yapf";
+            indent = {
+              tab-width = 4;
+              unit = " ";
+            };
+          }
+          {
+            name = "yaml";
+            language-servers = [
+              "yaml-language-server"
+            ];
+            indent = {
+              tab-width = 2;
+              unit = " ";
+            };
+          }
+          {
+            name = "sql";
+            file-types = ["sql" "pgsql"];
+            language-servers = [
+              "postgres_lsp"
+            ];
+            formatter.command = "pg_format";
+            # auto-format = true;
+            # formatter = {
+            #   command = "sqlfluff";
+            #   args = ["render" "--dialect" "postgres" "-"];
+            # };
+          }
+          {
+            name = "astro";
+            language-servers = ["astro-ls"];
+          }
+          {
+            name = "javascript";
+            language-servers = ["javascript-typescript-langserver"];
           }
         ];
       };
     };
-    home.file.helixExtraRuntime = {
-      target = ".config/helix/runtime";
-      source = ./runtime;
-      recursive = true;
+    home.file = {
+      helixExtraRuntime = {
+        target = ".config/helix/runtime";
+        source = ./runtime;
+        recursive = true;
+      };
+
+      # idris 2 files
+      idrisParser = {
+        target = ".config/helix/runtime/grammars/idris.so";
+        source = "${tree-sitter-idris.tree-sitter-idris}/parser";
+      };
+      idrisHighlights = {
+        # does not work with whole dir, so a single file
+        target = ".config/helix/runtime/queries/idris/highlights.scm";
+        source = "${tree-sitter-idris.tree-sitter-idris}/queries/highlights.scm";
+      };
     };
     home.sessionVariables = lib.mkIf cfg.makeDefaultEditor {
       EDITOR = "hx";

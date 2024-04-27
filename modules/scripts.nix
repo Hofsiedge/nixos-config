@@ -29,15 +29,8 @@
       clean = ''
         sudo nix-collect-garbage -d
         sudo nixos-rebuild boot --flake .#hofsiedge "$@"
+        ${notify "clean: finished"}
       '';
-      # nvim-offline = ''
-      #   pushd nvim
-      #   nix flake lock --update-input extra_config --no-warn-dirty
-      #   nix build --offline --no-warn-dirty
-      #   popd
-      #   sudo nix flake lock --update-input neovim --offline --no-warn-dirty
-      #   nixcfg-switch "$@"
-      # '';
       repair = ''
         sudo nix-store --verify --check-contents --repair \
           && ${notify "repair: ok"} \

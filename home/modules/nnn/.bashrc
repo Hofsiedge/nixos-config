@@ -1,5 +1,4 @@
 # source: https://github.com/jarun/nnn/blob/master/misc/quitcd/quitcd.bash_sh_zshq
-export DELME_VAR="qux"
 nnn ()
 {
     # Block nesting of nnn in subshells

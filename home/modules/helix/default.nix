@@ -96,9 +96,17 @@ in {
           ];
           buildInputs = [pkgs.makeWrapper];
           # TODO: why not just add languageServers to paths?
+          # TODO: append treesitter queries to already existing files
+
+          # TODO: a separate derivation for hx (I don't understand how to develop it rapidly otherwise)
           postBuild = ''
             wrapProgram $out/bin/hx \
               --prefix PATH : ${pkgs.lib.makeBinPath languageServers}
+
+            # for i in `find ${builtins.trace ./runtime ./runtime} -name "*.scm" -type f`; do
+            #   # cat ~/.config/helix/$i $i
+            #   echo $i
+            # done
           '';
         };
       settings = {
@@ -293,11 +301,14 @@ in {
       };
     };
     home.file = {
-      helixExtraRuntime = {
-        target = ".config/helix/runtime";
-        source = ./runtime;
-        recursive = true;
-      };
+      # FIXME: overwrites the shipped files
+      # FIX: actually not (they still remain in the nix store, but are ignored by helix since ~/.config/helix/runtime takes precedence)
+      # FIX: should just insert a copy of the relevant files from nix store
+      # helixExtraRuntime = {
+      #   target = ".config/helix/runtime";
+      #   source = ./runtime;
+      #   recursive = true;
+      # };
 
       # idris 2 files
       idrisParser = {
@@ -312,6 +323,26 @@ in {
     };
     home.sessionVariables = lib.mkIf cfg.makeDefaultEditor {
       EDITOR = "hx";
+    };
+
+    xdg.desktopEntries.helix = {
+      name = "Helix";
+      genericName = "Text Editor";
+      exec = "wezterm start -- hx %U"; # opens hx in wezterm
+      terminal = false;
+      categories = ["Application" "Development" "IDE"];
+      mimeType = [
+        "text/plain"
+        "text/markdown"
+        "text/xml"
+        "text/x-scheme"
+        "text/css"
+        "text/html"
+        "text/x-javascript"
+        "text/x-devicetree-source" # .nix apparently...
+        "text/x-python"
+        # TODO: other filetypes as well
+      ];
     };
   };
 }

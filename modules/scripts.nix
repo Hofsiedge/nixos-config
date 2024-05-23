@@ -4,6 +4,14 @@
   config,
   ...
 }: let
+  /*
+  Potentially useful commands
+
+  # open the nix store directory of a package
+  nnn $(nix eval --raw  unstable#gotools)
+
+  nix store optimise
+  */
   nixcfg = let
     cmd = name: body:
       pkgs.writeShellScriptBin "nixcfg-${name}" ''
@@ -28,6 +36,7 @@
       '';
       clean = ''
         sudo nix-collect-garbage -d
+        # TODO: nix store optimise?
         sudo nixos-rebuild boot --flake .#hofsiedge "$@"
         ${notify "clean: finished"}
       '';

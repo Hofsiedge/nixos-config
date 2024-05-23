@@ -15,10 +15,12 @@
 
   custom = {
     nnn.enable = true;
-    helix = {
-      enable = true;
-      makeDefaultEditor = true;
-    };
+  };
+
+  stylix.targets.helix.enable = false;
+  programs.helix = {
+    enable = true;
+    defaultEditor = true;
   };
 
   # TODO: swaylock, swayidle, ly display manager
@@ -29,12 +31,6 @@
     config = {
       terminal = "wezterm";
       modifier = "Mod4";
-      output = {
-        "*" = {
-          bg = "/home/hofsiedge/Wallpapers/great_wave_off_kanagawa-starry_night.jpg fill";
-        };
-      };
-      # bars = [{fonts.size = 15.0;}];
     };
     extraOptions = ["--unsupported-gpu"];
     extraConfig = ''
@@ -109,22 +105,21 @@
     pulseaudio
     brightnessctl
 
-    (python311.withPackages (ps:
+    (unstable.python312.withPackages (ps:
       with ps; [
         requests
+        ipython
       ]))
 
-    unstable.dbeaver
+    unstable.dbeaver-bin
     # TODO
     # jetbrains.pycharm-community
 
     # sway modules
-    swaylock
     swayidle
     wl-clipboard
     grim # screenshot
     slurp # screenshot
-    mako # notifications
     bemenu # dmenu clone
 
     libnotify
@@ -144,12 +139,13 @@
 
     gtypist
 
-    gtk-engine-murrine
-    libadwaita
-    gtk_engines
-    gsettings-desktop-schemas
-    lxappearance-gtk2
-    graphite-gtk-theme
+    # FIXME
+    # gtk-engine-murrine
+    # libadwaita
+    # gtk_engines
+    # gsettings-desktop-schemas
+    # lxappearance-gtk2
+    # graphite-gtk-theme
 
     # Nvidia stuff. FIXME: fine tune for the new hardware
     egl-wayland
@@ -164,18 +160,14 @@
       popd
     '')
   ];
-  # ++ [neovim];
+
+  programs.swaylock.enable = true;
+  services.mako.enable = true; # notifications
 
   programs.home-manager.enable = true;
-  gtk = {
-    enable = true;
-    /*
-    theme = {
-    name = "Materia-dark";
-    package = pkgs.materia-theme;
-    };
-    */
-  };
+
+  gtk.enable = true;
+
   programs.wezterm = {
     enable = true;
     extraConfig = ''
@@ -266,7 +258,7 @@
       golang.go
     ];
     userSettings = {
-      "workbench.colorTheme" = "Default Dark+";
+      # "workbench.colorTheme" = "Default Dark+";
       "python.defaultInterpreterPath" = "/run/current-system/sw/bin/python";
     };
   };
@@ -305,9 +297,7 @@
       "text/html" = "firefox.desktop";
       "application/xhtml+xml" = "firefox.desktop";
       "application/xhtml_xml" = "firefox.desktop";
-      # "x-scheme-handler/tg" = "org.telegram.desktop.desktop";
-      # TODO: check that the above comment does not reappear
-      "x-scheme-handler/tg" = "telegram.desktop";
+      "x-scheme-handler/tg" = "org.telegram.desktop.desktop;"; # yeah, that's how telegram wants it
     };
   };
 }

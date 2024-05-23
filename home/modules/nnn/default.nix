@@ -1,4 +1,5 @@
 # TODO: decompose programs.nnn.extraPackages into separate plugin dependencies
+# TODO: just like with helix - using lib.mkMerge
 {
   config,
   pkgs,

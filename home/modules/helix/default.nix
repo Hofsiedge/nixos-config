@@ -1,114 +1,29 @@
 {
   unstable,
   tree-sitter-idris,
-  config,
   pkgs,
   lib,
   ...
 }: let
-  cfg = config.custom.helix;
-in {
-  options.custom.helix = {
-    enable = lib.mkEnableOption "helix editor";
-    makeDefaultEditor = lib.mkOption {
-      description = "set helix as default editor";
-      type = lib.types.bool;
-      default = false;
-    };
-  };
-  config = lib.mkIf cfg.enable {
+  general = {
+    # FIXME: overwrites the shipped files
+    # FIX: actually not (they still remain in the nix store, but are ignored by helix since ~/.config/helix/runtime takes precedence)
+    # FIX: should just insert a copy of the relevant files from ${unstable.helix}/lib/runtime..
+    # helixExtraRuntime = {
+    #   target = ".config/helix/runtime";
+    #   source = ./runtime;
+    #   recursive = true;
+    # };
+
+    # lib.filesystem.listFilesRecursive ./home/modules/helix/runtime
+
     programs.helix = {
       enable = true;
-      package = let
-        languageServers = with pkgs; [
-          # nix
-          nil
-          alejandra
+      package = unstable.helix;
+      extraPackages = with pkgs; [
+        vscode-extensions.llvm-org.lldb-vscode # debugger for several languages
+      ];
 
-          # debugger for several languages
-          vscode-extensions.llvm-org.lldb-vscode
-
-          # html (FIXME)
-          # rome
-
-          # nickel language server
-          nls
-
-          # zig language server
-          zls
-
-          # elm
-          elmPackages.elm-language-server
-          elmPackages.elm-format # TODO: check if it is default
-
-          # latex
-          texlab
-
-          # other
-          marksman
-          taplo
-          yaml-language-server
-
-          # python
-          unstable.python311Packages.python-lsp-server
-          unstable.ruff-lsp
-          unstable.python311Packages.yapf
-          unstable.python311Packages.pylsp-mypy
-          # unstable.python311Packages.debugpy # TODO
-          # issue: https://github.com/helix-editor/helix/issues/5079
-          # issue: https://github.com/helix-editor/helix/issues/6265
-
-          # go
-          unstable.go_1_22
-          unstable.gopls
-          unstable.delve
-          unstable.gotools
-          unstable.go-tools
-          unstable.golangci-lint
-          unstable.golangci-lint-langserver
-
-          # postgresql
-          unstable.postgres-lsp
-          unstable.pgformatter
-          # unstable.sqlfluff
-
-          # js / ts
-          unstable.javascript-typescript-langserver
-        ];
-      in
-        pkgs.symlinkJoin {
-          name = "helix";
-          paths = [
-            unstable.helix
-            # helix ignores this for whatever reason
-            /*
-            (pkgs.stdenv.mkDerivation {
-              name = "helix-tree-sitter-idris";
-              src = tree-sitter-idris.tree-sitter-idris;
-              buildPhase = "";
-              installPhase = ''
-                mkdir -p $out/lib/runtime/{grammars,queries/idris}
-                cp parser $out/lib/runtime/grammars/idris.so
-                cp -r queries/* $out/lib/runtime/queries/idris
-              '';
-            })
-            */
-          ];
-          buildInputs = [pkgs.makeWrapper];
-          # TODO: why not just add languageServers to paths?
-          # TODO: append treesitter queries to already existing files
-
-          # TODO: a separate derivation for hx (I don't understand how to develop it rapidly otherwise)
-          postBuild = ''
-            wrapProgram $out/bin/hx \
-              --prefix PATH : ${pkgs.lib.makeBinPath languageServers}
-
-            # for i in `find ${builtins.trace ./runtime ./runtime} -name "*.scm" -type f`; do
-            #   # cat ~/.config/helix/$i $i
-            #   echo $i
-            # done
-          '';
-        };
       settings = {
         theme = "kanagawa";
         editor = {
@@ -118,7 +33,6 @@ in {
           completion-trigger-len = 1;
           rulers = [80 100];
           bufferline = "always";
-
           lsp = {
             display-inlay-hints = true;
           };
@@ -139,12 +53,94 @@ in {
           };
         };
       };
+    };
+
+    xdg.desktopEntries.helix = {
+      name = "Helix";
+      genericName = "Text Editor";
+      exec = "wezterm start -- hx %U"; # opens hx in wezterm
+      terminal = false;
+      categories = ["Application" "Development" "IDE"];
+      mimeType = [
+        "text/plain"
+        "text/xml"
+        "text/x-scheme"
+        "application/json"
+      ];
+    };
+  };
+
+  nix = {
+    programs.helix = {
+      extraPackages = with pkgs; [nil alejandra];
+      languages.language = [
+        {
+          name = "nix";
+          auto-format = true;
+          formatter.command = "alejandra";
+        }
+      ];
+    };
+    xdg.desktopEntries.helix.mimeType = ["text/x-devicetree-source"];
+  };
+
+  elm = {
+    programs.helix = {
+      # TODO: check if elm-format is default
+      extraPackages = with pkgs.elmPackages; [elm-language-server elm-format];
+    };
+  };
+
+  python = {
+    programs.helix = {
+      extraPackages = with unstable.python312Packages; [
+        python-lsp-server
+        yapf
+        pylsp-mypy
+        unstable.ruff-lsp
+        # unstable.python311Packages.debugpy # TODO
+        # issue: https://github.com/helix-editor/helix/issues/5079
+        # issue: https://github.com/helix-editor/helix/issues/6265
+      ];
       languages = {
         language-server = {
-          # python
           ruff-lsp.command = "ruff-lsp";
           pylsp.command = "pylsp";
-          # go
+        };
+        language = [
+          {
+            name = "python";
+            auto-format = true;
+            language-servers = [
+              "pylsp"
+              "ruff-lsp"
+            ];
+            formatter.command = "yapf";
+            indent = {
+              tab-width = 4;
+              unit = " ";
+            };
+          }
+        ];
+      };
+    };
+
+    xdg.desktopEntries.helix.mimeType = ["text/x-python"];
+  };
+
+  go = {
+    programs.helix = {
+      extraPackages = with unstable; [
+        go_1_22
+        gopls
+        delve
+        gotools
+        go-tools
+        golangci-lint
+        golangci-lint-langserver
+      ];
+      languages = {
+        language-server = {
           gopls = {
             command = "gopls";
             config = {
@@ -169,6 +165,7 @@ in {
               };
             };
           };
+
           golangci-lint-langserver = {
             command = "golangci-lint-langserver";
             config.command = [
@@ -179,35 +176,27 @@ in {
               "--issues-exit-code=1"
             ];
           };
-          # yaml
-          yaml-language-server = {
-            command = "yaml-language-server";
-            args = ["--stdio"];
-            config = {
-              yaml = {
-                keyOrdering = true;
-                schemas = {
-                  # "TODO: OpenAPI 3.0 instead of 3.1" = "/openapi.yaml";
-                };
-              };
-            };
-          };
-          # postgresql
-          postgres_lsp = {
-            command = "postgres_lsp";
-          };
-
-          # astro
-          astro-ls = {
-            command = "astro-ls";
-            args = ["--stdio"];
-          };
-
-          # js / ts
-          javascript-typescript-langserver = {
-            command = "javascript-typesctipt-stdio";
-          };
         };
+
+        language = [
+          {
+            name = "go";
+            auto-format = true;
+            language-servers = [
+              "gopls"
+              "golangci-lint-langserver"
+            ];
+          }
+        ];
+      };
+    };
+
+    xdg.desktopEntries.helix.mimeType = ["text/x-go"];
+  };
+
+  idris2 = {
+    programs.helix = {
+      languages = {
         language = [
           {
             name = "idris";
@@ -226,56 +215,98 @@ in {
             };
             language-servers = ["idris2-lsp"];
           }
-          {
-            name = "nix";
-            auto-format = true;
-            formatter.command = "alejandra";
-          }
-          {
-            name = "c";
-            auto-format = true;
-          }
+        ];
+      };
+    };
+    home.file = {
+      # idris 2 files
+      idrisParser = {
+        target = ".config/helix/runtime/grammars/idris.so";
+        source = "${tree-sitter-idris.tree-sitter-idris}/parser";
+      };
+      idrisHighlights = {
+        # does not work with whole dir, so a single file
+        target = ".config/helix/runtime/queries/idris/highlights.scm";
+        source = "${tree-sitter-idris.tree-sitter-idris}/queries/highlights.scm";
+      };
+    };
+  };
+  web = {
+    programs.helix = {
+      extraPackages = with unstable; [
+        nodePackages.typescript-language-server
+        vscode-langservers-extracted
+      ];
+      languages = {
+        language = [
           {
             name = "html";
             auto-format = true;
-            # language-servers = [
-            #   {
-            #     command = "rome";
-            #     args = ["lsp-proxy"];
-            #   }
-            # ];
           }
           {
-            name = "go";
+            name = "javascript";
             auto-format = true;
-            language-servers = [
-              "gopls"
-              "golangci-lint-langserver"
-            ];
           }
-          {
-            name = "python";
-            auto-format = true;
-            language-servers = [
-              "pylsp"
-              "ruff-lsp"
-            ];
-            formatter.command = "yapf";
-            indent = {
-              tab-width = 4;
-              unit = " ";
+        ];
+      };
+    };
+
+    xdg.desktopEntries.helix.mimeType = [
+      "text/css"
+      "text/html"
+      "text/x-javascript"
+    ];
+  };
+
+  yaml = {
+    programs.helix = {
+      extraPackages = with unstable; [
+        yaml-language-server
+      ];
+      languages = {
+        language-server = {
+          yaml-language-server = {
+            command = "yaml-language-server";
+            args = ["--stdio"];
+            config = {
+              yaml = {
+                keyOrdering = true;
+                schemas = {
+                  # "TODO: OpenAPI 3.0 instead of 3.1" = "/openapi.yaml";
+                };
+              };
             };
-          }
+          };
+        };
+        language = [
           {
             name = "yaml";
-            language-servers = [
-              "yaml-language-server"
-            ];
+            language-servers = ["yaml-language-server"];
             indent = {
               tab-width = 2;
               unit = " ";
             };
           }
+        ];
+      };
+    };
+    xdg.desktopEntries.helix.mimeType = ["application/yaml"];
+  };
+
+  sql = {
+    programs.helix = {
+      extraPackages = with unstable; [
+        postgres-lsp
+        pgformatter
+        # sqlfluff
+      ];
+      languages = {
+        language-server = {
+          postgres_lsp = {
+            command = "postgres_lsp";
+          };
+        };
+        language = [
           {
             name = "sql";
             file-types = ["sql" "pgsql"];
@@ -289,60 +320,43 @@ in {
             #   args = ["render" "--dialect" "postgres" "-"];
             # };
           }
-          {
-            name = "astro";
-            language-servers = ["astro-ls"];
-          }
-          {
-            name = "javascript";
-            language-servers = ["javascript-typescript-langserver"];
-          }
         ];
       };
     };
-    home.file = {
-      # FIXME: overwrites the shipped files
-      # FIX: actually not (they still remain in the nix store, but are ignored by helix since ~/.config/helix/runtime takes precedence)
-      # FIX: should just insert a copy of the relevant files from nix store
-      # helixExtraRuntime = {
-      #   target = ".config/helix/runtime";
-      #   source = ./runtime;
-      #   recursive = true;
-      # };
-
-      # idris 2 files
-      idrisParser = {
-        target = ".config/helix/runtime/grammars/idris.so";
-        source = "${tree-sitter-idris.tree-sitter-idris}/parser";
-      };
-      idrisHighlights = {
-        # does not work with whole dir, so a single file
-        target = ".config/helix/runtime/queries/idris/highlights.scm";
-        source = "${tree-sitter-idris.tree-sitter-idris}/queries/highlights.scm";
-      };
-    };
-    home.sessionVariables = lib.mkIf cfg.makeDefaultEditor {
-      EDITOR = "hx";
-    };
-
-    xdg.desktopEntries.helix = {
-      name = "Helix";
-      genericName = "Text Editor";
-      exec = "wezterm start -- hx %U"; # opens hx in wezterm
-      terminal = false;
-      categories = ["Application" "Development" "IDE"];
-      mimeType = [
-        "text/plain"
-        "text/markdown"
-        "text/xml"
-        "text/x-scheme"
-        "text/css"
-        "text/html"
-        "text/x-javascript"
-        "text/x-devicetree-source" # .nix apparently...
-        "text/x-python"
-        # TODO: other filetypes as well
-      ];
-    };
+    xdg.desktopEntries.helix.mimeType = ["application/sql"];
   };
-}
+
+  markdown = {
+    programs.helix.extraPackages = with unstable; [marksman];
+    xdg.desktopEntries.helix.mimeType = ["text/markdown"];
+  };
+in
+  lib.mkMerge [
+    general
+    nix
+    elm
+    python
+    go
+    idris2
+    web
+    yaml
+    sql
+    markdown
+    # miscellaneous
+    {
+      programs.helix = {
+        extraPackages = with pkgs; [
+          taplo # TOML
+        ];
+        languages = {
+          language-server = {};
+          language = [
+            {
+              name = "c";
+              auto-format = true;
+            }
+          ];
+        };
+      };
+    }
+  ]

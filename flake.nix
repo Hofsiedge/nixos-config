@@ -2,7 +2,8 @@
   inputs = {
     nixpkgs.url = "nixpkgs/nixos-23.11"; # stable
     unstable.url = "nixpkgs/nixos-unstable"; # unstable
-    unstable-small.url = "nixpkgs/nixos-unstable-small"; # even more unstable
+    # commented out to reduce network load on updates
+    # unstable-small.url = "nixpkgs/nixos-unstable-small"; # even more unstable
 
     home-manager = {
       url = "github:nix-community/home-manager/release-23.11";
@@ -22,7 +23,13 @@
       flake = false;
     };
 
-    tree-sitter-idris.url = "path:/home/hofsiedge/Projects/Idris2/tree-sitter-idris";
+    stylix = {
+      url = "github:danth/stylix/release-23.11";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.home-manager.follows = "home-manager";
+    };
+
+    tree-sitter-idris.url = "path:/home/hofsiedge/Projects/fun/Idris2/tree-sitter-idris";
   };
 
   outputs = {
@@ -52,7 +59,7 @@
             # Pin registries so `nix search` doesn't download all the time.
             stale.flake = inputs.nixpkgs;
             unstable.flake = inputs.unstable;
-            rolling.flake = inputs.unstable-small;
+            # rolling.flake = inputs.unstable-small;
 
             # BUG: `nix search` does not understand that `flake.nix` is in a subdir
             firefox-addons.flake = inputs.firefox-addons;
@@ -69,6 +76,8 @@
           programs.nix-index-database.comma.enable = true;
           programs.command-not-found.enable = false;
         }
+
+        inputs.stylix.nixosModules.stylix
       ];
     };
   };

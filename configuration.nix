@@ -1,6 +1,7 @@
 {
   pkgs,
   externalHostsfile,
+  unstable,
   ...
 }: let
   linja-sike = pkgs.callPackage ./packages/linja-sike.nix {};
@@ -225,10 +226,9 @@ in {
   services.gnome.gnome-keyring.enable = true;
 
   nix = {
-    # TODO: check if there are more suitable versions
-    package = pkgs.nixVersions.stable;
+    package = unstable.nixVersions.latest;
     extraOptions = ''
-      experimental-features = nix-command flakes repl-flake
+      experimental-features = nix-command flakes
       keep-going = true
       max-silent-time = 180
       auto-optimise-store = true
@@ -248,7 +248,6 @@ in {
       freefont_ttf
       # dejavu_fonts
     ]);
-  # TODO: check
   fonts.fontconfig.defaultFonts = {
     monospace = [
       "JetBrainsMono Nerd Font Mono"
@@ -276,6 +275,42 @@ in {
         exec sway || echo "could not start sway: not found"
       fi
     '';
+  };
+
+  stylix = {
+    image = ./wallpapers/great_wave_off_kanagawa-starry_night.jpg;
+    base16Scheme = "${pkgs.base16-schemes}/share/themes/kanagawa.yaml";
+    polarity = "dark";
+    cursor = {
+      package = pkgs.bibata-cursors;
+      name = "Bibata-Modern-Ice";
+    };
+    # FIXME: stylix does not seem to support fallback fonts...
+    # fonts = {
+    #   serif = {
+    #     package = pkgs.dejavu_fonts;
+    #     name = "DejaVu Serif";
+    #   };
+    #   sansSerif = {
+    #     package = pkgs.dejavu_fonts;
+    #     name = "DejaVu Sans";
+    #   };
+    #   monospace = {
+    #     package =
+    #       pkgs.nerdfonts.override
+    #       {
+    #         fonts = [
+    #           "JetBrainsMono"
+    #           "NerdFontsSymbolsOnly"
+    #         ];
+    #       };
+    #     name = "JetBrainsMono Nerd Font Mono";
+    #   };
+    #   emoji = {
+    #     package = pkgs.noto-fonts-emoji;
+    #     name = "Noto Color Emoji";
+    #   };
+    # };
   };
 
   # This value determines the NixOS release from which the default

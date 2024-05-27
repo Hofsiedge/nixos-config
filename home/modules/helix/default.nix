@@ -28,7 +28,7 @@
         theme = "kanagawa";
         editor = {
           line-number = "relative";
-          mouse = false;
+          mouse = true;
           idle-timeout = 100;
           completion-trigger-len = 1;
           rulers = [80 100];

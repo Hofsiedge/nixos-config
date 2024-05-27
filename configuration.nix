@@ -13,6 +13,7 @@ in {
     ./modules/nvidia.nix
     ./modules/devices.nix
     ./modules/network.nix
+    ./modules/bluetooth.nix
   ];
 
   # nixcfg

@@ -1,20 +1,16 @@
 {
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-23.11"; # stable
+    nixpkgs.url = "nixpkgs/nixos-24.05"; # stable
     unstable.url = "nixpkgs/nixos-unstable"; # unstable
     # commented out to reduce network load on updates
     # unstable-small.url = "nixpkgs/nixos-unstable-small"; # even more unstable
 
     home-manager = {
-      url = "github:nix-community/home-manager/release-23.11";
+      url = "github:nix-community/home-manager/release-24.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nix-index-database = {
       url = "github:Mic92/nix-index-database";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    firefox-addons = {
-      url = "gitlab:rycee/nur-expressions?dir=pkgs/firefox-addons";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -24,7 +20,7 @@
     };
 
     stylix = {
-      url = "github:danth/stylix/release-23.11";
+      url = "github:danth/stylix";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.home-manager.follows = "home-manager";
     };
@@ -49,7 +45,6 @@
             inherit system;
             config.allowUnfree = true;
           };
-          firefox-addons = inputs.firefox-addons.packages.${system};
           tree-sitter-idris = inputs.tree-sitter-idris.packages.${system};
         };
       modules = [
@@ -60,9 +55,6 @@
             stale.flake = inputs.nixpkgs;
             unstable.flake = inputs.unstable;
             # rolling.flake = inputs.unstable-small;
-
-            # BUG: `nix search` does not understand that `flake.nix` is in a subdir
-            firefox-addons.flake = inputs.firefox-addons;
           };
         }
         ./configuration.nix

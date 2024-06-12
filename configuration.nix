@@ -231,7 +231,7 @@ in {
     extraOptions = ''
       experimental-features = nix-command flakes
       keep-going = true
-      max-silent-time = 180
+      max-silent-time = 240
       auto-optimise-store = true
     '';
   };
@@ -247,7 +247,6 @@ in {
       ipafont
       kochi-substitute
       freefont_ttf
-      # dejavu_fonts
     ]);
   fonts.fontconfig.defaultFonts = {
     monospace = [
@@ -279,6 +278,7 @@ in {
   };
 
   stylix = {
+    enable = true;
     image = ./wallpapers/great_wave_off_kanagawa-starry_night.jpg;
     base16Scheme = "${pkgs.base16-schemes}/share/themes/kanagawa.yaml";
     polarity = "dark";
@@ -312,6 +312,20 @@ in {
     #     name = "Noto Color Emoji";
     #   };
     # };
+  };
+
+  programs.nh = {
+    enable = true;
+    flake = "/home/hofsiedge/.nixos-config";
+
+    clean = {
+      enable = true;
+      extraArgs = "--keep 3 --keep-since 3d";
+    };
+  };
+
+  services.ollama = {
+    enable = true;
   };
 
   # This value determines the NixOS release from which the default

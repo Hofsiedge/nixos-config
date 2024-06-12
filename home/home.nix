@@ -300,10 +300,9 @@
   home.stateVersion = "22.05";
   home.packages = with pkgs; [
     nvd # nix diffs
+    nix-visualize
 
     chromium
-    luakit
-    librewolf-wayland
     unstable.telegram-desktop
     unstable.fluffychat
 
@@ -337,8 +336,6 @@
       ]))
 
     unstable.dbeaver-bin
-    # TODO
-    # jetbrains.pycharm-community
 
     # sway modules
     swayidle
@@ -349,7 +346,7 @@
     libnotify
 
     # preview Markdown
-    python311Packages.grip
+    python312Packages.grip
 
     anki-bin
 
@@ -363,14 +360,6 @@
 
     gtypist
 
-    # FIXME
-    # gtk-engine-murrine
-    # libadwaita
-    # gtk_engines
-    # gsettings-desktop-schemas
-    # lxappearance-gtk2
-    # graphite-gtk-theme
-
     # Nvidia stuff. FIXME: fine tune for the new hardware
     egl-wayland
 
@@ -378,8 +367,9 @@
 
     unstable.anydesk
 
+    # FIXME: this should be a shell within nix store on build.
     (pkgs.writeShellScriptBin "go-playground" ''
-      pushd /home/hofsiedge/Projects/go-playground
+      pushd $HOME/Projects/misc/go-playground
       nix develop --offline --command $EDITOR code.go
       popd
     '')
@@ -421,12 +411,6 @@
     enable = true;
     package = unstable.firefox;
     profiles.hofsiedge = {
-      extensions = with inputs.firefox-addons; [
-        # vimium-c
-        # ublock-origin
-        # ublacklist
-        # youtube-shorts-block
-      ];
       search = {
         engines = {
           "Nix Packages" = {
@@ -478,12 +462,23 @@
   programs.vscode = {
     enable = true;
     package = pkgs.vscodium;
-    extensions = with pkgs.vscode-extensions; [
-      golang.go
-    ];
+    extensions = with pkgs.vscode-extensions;
+      [
+        golang.go
+      ]
+      ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
+        {
+          name = "idris-vscode";
+          publisher = "meraymond";
+          version = "latest";
+          # sha256 = pkgs.lib.fakeHash;
+          sha256 = "sha256-QAzjm+8Z+4TDbM5amh3UEkSmp0n8ZlRHYpUGAewIVXk=";
+        }
+      ];
+
     userSettings = {
-      # "workbench.colorTheme" = "Default Dark+";
       "python.defaultInterpreterPath" = "/run/current-system/sw/bin/python";
+      "idris.idrisPath" = "idris2";
     };
   };
 
@@ -504,6 +499,8 @@
       init.defaultBranch = "main";
     };
   };
+  programs.gh.enable = true;
+
   programs.bash = {
     enable = true;
     bashrcExtra = ''

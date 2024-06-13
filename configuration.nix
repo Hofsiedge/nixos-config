@@ -77,6 +77,7 @@ in {
   powerManagement = {
     enable = true;
     powertop.enable = true;
+    cpuFreqGovernor = "powersave";
   };
   services.power-profiles-daemon.enable = true;
   services.thermald.enable = true;

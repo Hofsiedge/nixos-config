@@ -45,6 +45,14 @@ in {
       ];
     };
   };
+
+  swapDevices = [
+    {
+      device = "/var/lib/swapfile";
+      size = 34 * 1024; # 34GB
+    }
+  ];
+
   # network settings
   networking.extraHosts = ''
     192.168.1.52 lanlocalhost.home

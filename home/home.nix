@@ -29,48 +29,56 @@
   wayland.windowManager.sway = {
     enable = true;
     wrapperFeatures.gtk = true;
-    config = {
+    config = rec {
       bars = [
         {command = "waybar";}
       ];
       terminal = "wezterm";
       modifier = "Mod4";
       menu = "${pkgs.fuzzel}/bin/fuzzel";
+
+      keybindings = lib.mkOptionDefault {
+        # Brightness
+        XF86MonBrightnessDown = ''exec "brightnessctl set 2%-"'';
+        XF86MonBrightnessUp = ''exec "brightnessctl set +2%"'';
+
+        # Volume
+        XF86AudioRaiseVolume = ''exec "pactl set-sink-volume @DEFAULT_SINK@ +1%"'';
+        XF86AudioLowerVolume = ''exec "pactl set-sink-volume @DEFAULT_SINK@ -1%"'';
+        XF86AudioMute = ''exec "pactl set-sink-mute @DEFAULT_SINK@ toggle"'';
+
+        # Screenshot
+        Print = ''exec grim -g "$(slurp)" /tmp/$(date +'%H:%M:%S.png')'';
+        "Ctrl+Print" = "exec ocr-screenshot";
+
+        # Password manager
+        "${modifier}+p" = "exec passmenu";
+      };
+
+      input = {
+        # Keyboard
+        "*" = {
+          xkb_layout = "us,ru";
+          xkb_options = "grp:alt_shift_toggle";
+        };
+        "1:1:AT_Translated_Set_2_keyboard" = {
+          repeat_delay = "250";
+          repeat_rate = "65";
+          xkb_numlock = "enable";
+        };
+        "type:touchpad" = {
+          tap = "enabled";
+          natural_scroll = "enabled";
+          scroll_factor = "0.5";
+          dwt = "disabled";
+        };
+        # TODO
+        "1386:890:Wacom_One_by_Wacom_S_Pen" = {};
+      };
     };
     extraOptions = ["--unsupported-gpu"];
+    # TODO: migrate to config
     extraConfig = ''
-      # Brightness
-      bindsym XF86MonBrightnessDown exec "brightnessctl set 2%-"
-      bindsym XF86MonBrightnessUp exec "brightnessctl set +2%"
-      # Volume
-      bindsym XF86AudioRaiseVolume exec "pactl set-sink-volume @DEFAULT_SINK@ +1%"
-      bindsym XF86AudioLowerVolume exec "pactl set-sink-volume @DEFAULT_SINK@ -1%"
-      bindsym XF86AudioMute exec "pactl set-sink-mute @DEFAULT_SINK@ toggle"
-      # Screenshot
-      bindsym Print exec grim -g "$(slurp)" /tmp/$(date +'%H:%M:%S.png')
-
-      # Password manager
-      bindsym Mod4+p exec passmenu
-      # Keyboard
-      input * {
-        xkb_layout "us,ru"
-        xkb_options "grp:alt_shift_toggle"
-      }
-      input 1:1:AT_Translated_Set_2_keyboard {
-        repeat_delay 250
-        repeat_rate  65
-        xkb_numlock enable
-      }
-      input type:touchpad {
-        tap enabled
-        natural_scroll enabled
-        scroll_factor 0.5
-        dwt disabled
-      }
-      # TODO
-      input 1386:890:Wacom_One_by_Wacom_S_Pen {
-      }
-
       # HDMI workspace 9
       workspace 9 output HDMI-A-1
     '';
@@ -369,10 +377,24 @@
 
     # FIXME: this should be a shell within nix store on build.
     (pkgs.writeShellScriptBin "go-playground" ''
-      pushd $HOME/Projects/misc/go-playground
+      cd $HOME/Projects/misc/go-playground
       nix develop --offline --command $EDITOR code.go
-      popd
     '')
+
+    (pkgs.writeShellApplication {
+      name = "ocr-screenshot";
+      runtimeInputs = with pkgs; [
+        tesseract
+        slurp
+        wl-clipboard
+        grim
+      ];
+      text = ''
+        grim -g "$(slurp)" /tmp/ocr.png \
+        && tesseract -c preserve_interword_spaces=1 /tmp/ocr.png stdout \
+        |  wl-copy
+      '';
+    })
   ];
 
   programs.swaylock.enable = true;

@@ -384,15 +384,23 @@
     (pkgs.writeShellApplication {
       name = "ocr-screenshot";
       runtimeInputs = with pkgs; [
-        tesseract
-        slurp
-        wl-clipboard
         grim
+        slurp
+        tesseract
+        wl-clipboard
+        libnotify
       ];
       text = ''
         grim -g "$(slurp)" /tmp/ocr.png \
-        && tesseract -c preserve_interword_spaces=1 /tmp/ocr.png stdout \
-        |  wl-copy
+        && tesseract \
+          -c preserve_interword_spaces=1 "$@" /tmp/ocr.png stdout \
+          -l eng+rus+deu+jpn \
+        |  wl-copy \
+        && notify-send \
+          --expire-time 5000 \
+          --urgency low \
+          "OCR complete" \
+          "Result copied to the clipboard"
       '';
     })
   ];

@@ -3,9 +3,11 @@
   externalHostsfile,
   unstable,
   ...
-}: let
-  linja-sike = pkgs.callPackage ./packages/linja-sike.nix {};
-in {
+}:
+let
+  linja-sike = pkgs.callPackage ./packages/linja-sike.nix { };
+in
+{
   imports = [
     ./hardware-configuration.nix
 
@@ -29,7 +31,10 @@ in {
         mountPoint = "/home/hofsiedge/media/E";
         device = "/dev/sda1";
         fsType = "ntfs-3g";
-        options = ["rw" "uid=1000"];
+        options = [
+          "rw"
+          "uid=1000"
+        ];
       }
     ];
     keyboards = {
@@ -60,23 +65,34 @@ in {
   custom.network = {
     enable = true;
     enableWifi = true;
-    hosts = [externalHostsfile];
+    hosts = [ externalHostsfile ];
     firewall = {
       enable = true;
       openPorts = {
         DS3 = {
-          tcp = ["27015-27030" 27036 27037];
-          udp = [4380 "27000-27031" 27036];
+          tcp = [
+            "27015-27030"
+            27036
+            27037
+          ];
+          udp = [
+            4380
+            "27000-27031"
+            27036
+          ];
         };
         TMNF = rec {
-          tcp = [2350 3450];
+          tcp = [
+            2350
+            3450
+          ];
           udp = tcp;
         };
         Grafana = {
-          tcp = [3000];
+          tcp = [ 3000 ];
         };
         PublicServer = {
-          tcp = [80];
+          tcp = [ 80 ];
         };
       };
     };
@@ -90,11 +106,12 @@ in {
   services.power-profiles-daemon.enable = true;
   services.thermald.enable = true;
 
+  hardware.nvidia-container-toolkit.enable = true;
   virtualisation = {
     docker = rec {
       enable = true;
       # NOTE: nvidia runtime is only available with sudo
-      enableNvidia = true;
+      # enableNvidia = true; # TODO: remove this line
       autoPrune = {
         enable = true;
         dates = "daily";
@@ -103,7 +120,7 @@ in {
         enable = true;
         setSocketVariable = true;
         daemon.settings = {
-          dns = ["8.8.8.8"]; # fixes malformed default /etc/resolv.conf
+          dns = [ "8.8.8.8" ]; # fixes malformed default /etc/resolv.conf
           # FIXME: Cannot connect to the Docker daemon at unix:///run/user/1000/docker.sock. Is the docker daemon running?
           # no troubles with sudo
           # data-root = "${users.users.hofsiedge.home}/media/E/docker";
@@ -116,7 +133,11 @@ in {
       enable = true;
       qemu = {
         ovmf.enable = true;
-        ovmf.packages = with pkgs; [OVMFFull.fd virtiofsd win-virtio];
+        ovmf.packages = with pkgs; [
+          OVMFFull.fd
+          virtiofsd
+          win-virtio
+        ];
       };
     };
   };
@@ -167,7 +188,8 @@ in {
   };
 
   # Set your time zone.
-  time.timeZone = "Europe/Moscow";
+  # time.timeZone = "Europe/Moscow";
+  time.timeZone = "Japan";
 
   # Select internationalisation properties.
   i18n.defaultLocale = "en_US.UTF-8";
@@ -186,7 +208,12 @@ in {
   # Enable CUPS to print documents.
   services.printing = {
     enable = true;
-    drivers = with pkgs; [gutenprint samsung-unified-linux-driver splix];
+    drivers = with pkgs; [
+      gutenprint
+      samsung-unified-linux-driver
+      splix
+      hplip
+    ];
   };
 
   security.rtkit.enable = true;
@@ -195,9 +222,10 @@ in {
     alsa.enable = true;
     alsa.support32Bit = true;
     pulse.enable = true;
+    wireplumber.enable = true;
   };
   xdg.portal = {
-    config.common.default = ["gtk"];
+    config.common.default = [ "gtk" ];
     wlr.enable = true; # enable screen sharing
   };
 
@@ -216,12 +244,13 @@ in {
 
   nixpkgs.config = {
     allowUnfree = true;
+    # cudaSupport = true;
     packageOverrides = pkgs: {
       nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {
         inherit pkgs;
       };
     };
-    permittedInsecurePackages = [];
+    permittedInsecurePackages = [ ];
   };
   programs.steam.enable = true;
 
@@ -237,19 +266,24 @@ in {
 
   nix = {
     package = unstable.nixVersions.latest;
+    settings.auto-optimise-store = true;
     extraOptions = ''
-      experimental-features = nix-command flakes
+      experimental-features = nix-command flakes no-url-literals
       keep-going = true
       max-silent-time = 240
-      auto-optimise-store = true
     '';
   };
 
   fonts.fontDir.enable = true;
   fonts.packages =
-    [linja-sike]
+    [ linja-sike ]
     ++ (with pkgs; [
-      (nerdfonts.override {fonts = ["JetBrainsMono" "NerdFontsSymbolsOnly"];})
+      (nerdfonts.override {
+        fonts = [
+          "JetBrainsMono"
+          "NerdFontsSymbolsOnly"
+        ];
+      })
       line-awesome
       open-sans
       libertine
@@ -278,6 +312,7 @@ in {
     systemPackages = with pkgs; [
       virt-manager
       pinentry-curses
+      # cudatoolkit
     ];
     loginShellInit = ''
       if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
@@ -335,6 +370,14 @@ in {
 
   services.ollama = {
     enable = true;
+  };
+
+  specialisation = {
+    ignore-lid = {
+      configuration = {
+        services.logind.lidSwitch = "ignore";
+      };
+    };
   };
 
   # This value determines the NixOS release from which the default

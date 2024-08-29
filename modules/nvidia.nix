@@ -4,17 +4,19 @@
   pkgs,
   config,
   ...
-}: let
+}:
+let
   # the values that user has set
   cfg = config.custom.nvidia;
-in {
-  imports = [];
+in
+{
+  imports = [ ];
   options.custom.nvidia = {
     enable = lib.mkEnableOption "nvidia drivers";
     # TODO: version, mode, bus ids
   };
   config = lib.mkIf cfg.enable {
-    services.xserver.videoDrivers = ["nvidia"];
+    services.xserver.videoDrivers = [ "nvidia" ];
     hardware = {
       nvidia = {
         package = pkgs.linuxPackages.nvidiaPackages.stable;
@@ -31,9 +33,7 @@ in {
       opengl = {
         enable = true;
         driSupport = true;
-        extraPackages = with pkgs; [
-          intel-compute-runtime
-        ];
+        extraPackages = with pkgs; [ intel-compute-runtime ];
       };
     };
   };

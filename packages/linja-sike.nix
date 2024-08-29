@@ -1,7 +1,7 @@
 { stdenv, fetchurl }:
 
 stdenv.mkDerivation rec {
-  name    = "linja-sike-${version}";
+  name = "linja-sike-${version}";
   version = "5.0";
 
   src = fetchurl {

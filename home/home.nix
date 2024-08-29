@@ -3,7 +3,8 @@
   lib,
   unstable,
   ...
-} @ inputs: {
+}@inputs:
+{
   imports = [
     ./modules/nnn
     ./modules/helix
@@ -30,9 +31,7 @@
     enable = true;
     wrapperFeatures.gtk = true;
     config = rec {
-      bars = [
-        {command = "waybar";}
-      ];
+      bars = [ { command = "waybar"; } ];
       terminal = "wezterm";
       modifier = "Mod4";
       menu = "${pkgs.fuzzel}/bin/fuzzel";
@@ -73,10 +72,10 @@
           dwt = "disabled";
         };
         # TODO
-        "1386:890:Wacom_One_by_Wacom_S_Pen" = {};
+        "1386:890:Wacom_One_by_Wacom_S_Pen" = { };
       };
     };
-    extraOptions = ["--unsupported-gpu"];
+    extraOptions = [ "--unsupported-gpu" ];
     # TODO: migrate to config
     extraConfig = ''
       # HDMI workspace 9
@@ -89,6 +88,11 @@
     settings.main.dpi-aware = lib.mkForce true;
   };
 
+  programs.yazi = {
+    enable = true;
+    enableBashIntegration = true;
+  };
+
   programs.waybar = {
     enable = true;
     settings = {
@@ -99,8 +103,13 @@
         # "width": 1280, # Waybar width
         spacing = 4; # Gaps between modules (4px)
         # Choose the order of the modules
-        modules-left = ["sway/workspaces" "sway/mode" "sway/scratchpad" "custom/media"];
-        modules-center = ["sway/window"];
+        modules-left = [
+          "sway/workspaces"
+          "sway/mode"
+          "sway/scratchpad"
+          "custom/media"
+        ];
+        modules-center = [ "sway/window" ];
         modules-right = [
           "mpd"
           "idle_inhibitor"
@@ -118,22 +127,6 @@
           "tray"
         ];
         # Modules configuration
-        # "sway/workspaces": {
-        #     "disable-scroll": true,
-        #     "all-outputs": true,
-        #     "warp-on-scroll": false,
-        #     "format": "{name}: {icon}",
-        #     "format-icons": {
-        #         "1": "",
-        #         "2": "",
-        #         "3": "",
-        #         "4": "",
-        #         "5": "",
-        #         "urgent": "",
-        #         "focused": "",
-        #         "default": ""
-        #     }
-        # },
         keyboard-state = {
           numlock = true;
           capslock = true;
@@ -149,7 +142,10 @@
         "sway/scratchpad" = {
           format = "{icon} {count}";
           show-empty = false;
-          format-icons = ["" ""];
+          format-icons = [
+            ""
+            ""
+          ];
           tooltip = true;
           tooltip-format = "{app}: {title}";
         };
@@ -209,12 +205,26 @@
           critical-threshold = 80;
           # "format-critical": "{temperatureC}°C {icon}",
           format = "{temperatureC}°C {icon}";
-          format-icons = ["" "" ""];
+          format-icons = [
+            ""
+            ""
+            ""
+          ];
         };
         backlight = {
           # "device"= "acpi_video1",
           format = "{percent}% {icon}";
-          format-icons = ["" "" "" "" "" "" "" "" ""];
+          format-icons = [
+            ""
+            ""
+            ""
+            ""
+            ""
+            ""
+            ""
+            ""
+            ""
+          ];
         };
         battery = {
           states = {
@@ -228,7 +238,13 @@
           format-alt = "{time} {icon}";
           # format-good= "", # An empty format will hide the module
           # format-full= "",
-          format-icons = ["" "" "" "" ""];
+          format-icons = [
+            ""
+            ""
+            ""
+            ""
+            ""
+          ];
         };
         "battery#bat2" = {
           bat = "BAT2";
@@ -257,7 +273,11 @@
             phone = "";
             portable = "";
             car = "";
-            default = ["" "" ""];
+            default = [
+              ""
+              ""
+              ""
+            ];
           };
           on-click = "pavucontrol";
         };
@@ -275,135 +295,126 @@
         };
       };
     };
-
-    # settings = {
-    #   mainBar = {
-    #     layer = "top";
-    #     position = "top";
-    #     height = 30;
-    #     output = [
-    #       "eDP-1"
-    #       "HDMI-A-1"
-    #     ];
-    #     modules-left = ["sway/workspaces" "sway/mode" "wlr/taskbar"];
-    #     modules-center = ["sway/window" "custom/hello-from-waybar"];
-    #     modules-right = ["mpd" "custom/mymodule#with-css-id" "temperature"];
-
-    #     "sway/workspaces" = {
-    #       disable-scroll = true;
-    #       all-outputs = true;
-    #     };
-    #     "custom/hello-from-waybar" = {
-    #       format = "hello {}";
-    #       max-length = 40;
-    #       interval = "once";
-    #       exec = pkgs.writeShellScript "hello-from-waybar" ''
-    #         echo "from within waybar"
-    #       '';
-    #     };
-    #   };
-    # };
   };
 
   home.stateVersion = "22.05";
-  home.packages = with pkgs; [
-    nvd # nix diffs
-    nix-visualize
+  home.packages =
+    with pkgs;
+    assert unstable.fluffychat.meta.insecure || throw "fluffychat is secure now! enable it!";
+    [
 
-    chromium
-    unstable.telegram-desktop
-    unstable.fluffychat
+      nvd # nix diffs
+      nix-visualize
 
-    # nixops
+      nekoray
 
-    libreoffice-fresh
-    # media
-    krita
-    blender
-    mpv
-    inkscape
-    obs-studio
-    godot_4
-    kdenlive
-    kicad-small
-    okular
-    typst
+      chromium
+      unstable.telegram-desktop
+      deluge
+      thunderbird
+      freerdp
+      remmina
 
-    # zettlr
-    # sound & display controls
-    # TODO: use a graph instead (https://github.com/futpib/pagraphcontrol)
-    # TODO: add effects (https://github.com/wwmm/easyeffects)
-    pavucontrol
-    pulseaudio
-    brightnessctl
+      # nixops
 
-    (unstable.python312.withPackages (ps:
-      with ps; [
-        requests
-        ipython
-      ]))
+      libreoffice-fresh
+      # media
+      krita
+      (blender.override { cudaSupport = true; })
+      mpv
+      (inkscape-with-extensions.override {
+        inkscapeExtensions = [ inkscape-extensions.applytransforms ];
+      })
+      obs-studio
+      godot_4
+      kdenlive
+      kicad
+      freecad
+      okular
+      typst
+      vlc
 
-    unstable.dbeaver-bin
+      pdfcpu
 
-    # sway modules
-    swayidle
-    wl-clipboard
-    grim # screenshot
-    slurp # screenshot
+      # zettlr
+      # sound & display controls
+      # TODO: use a graph instead (https://github.com/futpib/pagraphcontrol)
+      # TODO: add effects (https://github.com/wwmm/easyeffects)
+      pavucontrol
+      # pulseaudio
+      brightnessctl
 
-    libnotify
+      (unstable.python312.withPackages (
+        ps: with ps; [
+          requests
+          ipython
+        ]
+      ))
 
-    # preview Markdown
-    python312Packages.grip
+      unstable.dbeaver-bin
 
-    anki-bin
+      unstable.insomnia
 
-    leafpad
-    gotop
-    tree
-    cloc
-    jq
+      # sway modules
+      swayidle
+      wl-clipboard
+      grim # screenshot
+      slurp # screenshot
 
-    docker-compose
+      libnotify
 
-    gtypist
+      # preview Markdown
+      python312Packages.grip
 
-    # Nvidia stuff. FIXME: fine tune for the new hardware
-    egl-wayland
+      anki-bin
 
-    pass-wayland
+      leafpad
+      gotop
+      tree
+      cloc
+      jq
+      superfile
 
-    unstable.anydesk
+      docker-compose
 
-    # FIXME: this should be a shell within nix store on build.
-    (pkgs.writeShellScriptBin "go-playground" ''
-      cd $HOME/Projects/misc/go-playground
-      nix develop --offline --command $EDITOR code.go
-    '')
+      gtypist
 
-    (pkgs.writeShellApplication {
-      name = "ocr-screenshot";
-      runtimeInputs = with pkgs; [
-        grim
-        slurp
-        tesseract
-        wl-clipboard
-        libnotify
-      ];
-      text = ''
-        grim -g "$(slurp)" /tmp/ocr.png \
-        && tesseract \
-          -c preserve_interword_spaces=1 "$@" /tmp/ocr.png stdout \
-          -l eng+rus+deu+jpn \
-        |  wl-copy \
-        && notify-send \
-          --expire-time 5000 \
-          --urgency low \
-          "OCR complete" \
-          "Result copied to the clipboard"
-      '';
-    })
-  ];
+      # Nvidia stuff. FIXME: fine tune for the new hardware
+      egl-wayland
+
+      pass-wayland
+
+      unstable.anydesk
+
+      # FIXME: this should be a shell within nix store on build.
+      (pkgs.writeShellScriptBin "go-playground" ''
+        cd $HOME/Projects/misc/go-playground
+        nix develop --offline --command $EDITOR code.go
+      '')
+
+      (pkgs.writeShellApplication {
+        name = "ocr-screenshot";
+        runtimeInputs = with pkgs; [
+          grim
+          slurp
+          tesseract
+          wl-clipboard
+          libnotify
+        ];
+        text = ''
+          grim -g "$(slurp)" /tmp/ocr.png \
+          && tesseract \
+            -c preserve_interword_spaces=1 "$@" /tmp/ocr.png stdout \
+            -l eng+rus+deu+jpn \
+          |  wl-copy \
+          && notify-send \
+            --expire-time 5000 \
+            --urgency low \
+            "OCR complete" \
+            "Result copied to the clipboard"
+        '';
+      })
+    ];
 
   programs.swaylock.enable = true;
   services.mako.enable = true; # notifications
@@ -439,42 +450,21 @@
 
   programs.firefox = {
     enable = true;
-    package = unstable.firefox;
-    profiles.hofsiedge = {
-      search = {
-        engines = {
-          "Nix Packages" = {
-            urls = [
-              {
-                template = "https://search.nixos.org/packages";
-                params = [
-                  {
-                    name = "type";
-                    value = "packages";
-                  }
-                  {
-                    name = "query";
-                    value = "{searchTerms}";
-                  }
-                ];
-              }
-            ];
-
-            icon = "${pkgs.nixos-icons}/share/icons/hicolor/scalable/apps/nix-snowflake.svg";
-            definedAliases = ["@np"];
+    package = unstable.firefox-devedition-bin;
+    profiles = rec {
+      hofsiedge = {
+        id = 0;
+        search = {
+          engines = {
+            "Bing".metaData.hidden = true;
+            "Google".metaData.alias = "@g";
           };
-
-          "NixOS Wiki" = {
-            urls = [{template = "https://nixos.wiki/index.php?search={searchTerms}";}];
-            iconUpdateURL = "https://nixos.wiki/favicon.png";
-            updateInterval = 24 * 60 * 60 * 1000; # every day
-            definedAliases = ["@nw"];
-          };
-
-          "Bing".metaData.hidden = true;
-          "Google".metaData.alias = "@g";
+          force = true;
         };
-        force = true;
+      };
+
+      dev-edition-default = hofsiedge // {
+        id = 1;
       };
     };
   };
@@ -490,12 +480,11 @@
 
   # for those use cases where helix is lacking yet
   programs.vscode = {
-    enable = true;
+    enable = false;
     package = pkgs.vscodium;
-    extensions = with pkgs.vscode-extensions;
-      [
-        golang.go
-      ]
+    extensions =
+      with pkgs.vscode-extensions;
+      [ golang.go ]
       ++ pkgs.vscode-utils.extensionsFromVscodeMarketplace [
         {
           name = "idris-vscode";
@@ -503,6 +492,13 @@
           version = "latest";
           # sha256 = pkgs.lib.fakeHash;
           sha256 = "sha256-QAzjm+8Z+4TDbM5amh3UEkSmp0n8ZlRHYpUGAewIVXk=";
+        }
+        {
+          name = "templ";
+          publisher = "a-h";
+          version = "latest";
+          # sha256 = pkgs.lib.fakeHash;
+          sha256 = "sha256-/77IO+WjgWahUrj6xVl0tkvICh9Cy+MtfH2dewxH8LE=";
         }
       ];
 
@@ -541,14 +537,23 @@
 
   xdg.mimeApps = {
     enable = true;
-    defaultApplications = {
-      "application/pdf" = "firefox.desktop";
-      "x-scheme-handler/http" = "firefox.desktop";
-      "x-scheme-handler/https" = "firefox.desktop";
-      "text/html" = "firefox.desktop";
-      "application/xhtml+xml" = "firefox.desktop";
-      "application/xhtml_xml" = "firefox.desktop";
-      "x-scheme-handler/tg" = "org.telegram.desktop.desktop;"; # yeah, that's how telegram wants it
-    };
+    defaultApplications =
+      with pkgs.lib.attrsets;
+      concatMapAttrs (name: mimes: genAttrs mimes (_: name + ".desktop")) {
+        "firefox-developer-edition" = [
+          "application/pdf"
+          "x-scheme-handler/http"
+          "x-scheme-handler/https"
+          "text/html"
+          "application/xhtml+xml"
+          "x-scheme-handler/chrome"
+          "application/x-extension-htm"
+          "application/x-extension-html"
+          "application/x-extension-shtml"
+          "application/x-extension-xhtml"
+          "application/x-extension-xht"
+        ];
+        "org.telegram.desktop" = [ "x-scheme-handler/tg" ];
+      };
   };
 }

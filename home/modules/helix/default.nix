@@ -4,7 +4,8 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   general = {
     # FIXME: overwrites the shipped files
     # FIX: actually not (they still remain in the nix store, but are ignored by helix since ~/.config/helix/runtime takes precedence)
@@ -31,7 +32,10 @@
           mouse = true;
           idle-timeout = 100;
           completion-trigger-len = 1;
-          rulers = [80 100];
+          rulers = [
+            80
+            100
+          ];
           bufferline = "always";
           lsp = {
             display-inlay-hints = true;
@@ -60,7 +64,11 @@
       genericName = "Text Editor";
       exec = "wezterm start -- hx %U"; # opens hx in wezterm
       terminal = false;
-      categories = ["Application" "Development" "IDE"];
+      categories = [
+        "Application"
+        "Development"
+        "IDE"
+      ];
       mimeType = [
         "text/plain"
         "text/xml"
@@ -72,22 +80,28 @@
 
   nix = {
     programs.helix = {
-      extraPackages = with pkgs; [nil alejandra];
+      extraPackages = with pkgs; [
+        nil
+        nixfmt-rfc-style
+      ];
       languages.language = [
         {
           name = "nix";
           auto-format = true;
-          formatter.command = "alejandra";
+          formatter.command = "nixfmt";
         }
       ];
     };
-    xdg.desktopEntries.helix.mimeType = ["text/x-devicetree-source"];
+    xdg.desktopEntries.helix.mimeType = [ "text/x-devicetree-source" ];
   };
 
   elm = {
     programs.helix = {
       # TODO: check if elm-format is default
-      extraPackages = with pkgs.elmPackages; [elm-language-server elm-format];
+      extraPackages = with pkgs.elmPackages; [
+        elm-language-server
+        elm-format
+      ];
     };
   };
 
@@ -125,7 +139,7 @@
       };
     };
 
-    xdg.desktopEntries.helix.mimeType = ["text/x-python"];
+    xdg.desktopEntries.helix.mimeType = [ "text/x-python" ];
   };
 
   go = {
@@ -191,7 +205,7 @@
       };
     };
 
-    xdg.desktopEntries.helix.mimeType = ["text/x-go"];
+    xdg.desktopEntries.helix.mimeType = [ "text/x-go" ];
   };
 
   idris2 = {
@@ -202,8 +216,8 @@
             name = "idris";
             scope = "source.idris";
             injection-regex = "idris";
-            file-types = ["idr"];
-            shebangs = [];
+            file-types = [ "idr" ];
+            shebangs = [ ];
             comment-token = "--";
             block-comment-tokens = {
               start = "{-";
@@ -213,7 +227,7 @@
               tab-width = 2;
               unit = "  ";
             };
-            language-servers = ["idris2-lsp"];
+            language-servers = [ "idris2-lsp" ];
           }
         ];
       };
@@ -235,18 +249,38 @@
     programs.helix = {
       extraPackages = with unstable; [
         nodePackages.typescript-language-server
-        vscode-langservers-extracted
+        pkgs.vscode-langservers-extracted # FIXME: use unstable when it's fixed
+        htmx-lsp
       ];
       languages = {
+        language-server = {
+          htmx-lsp = {
+            command = "htmx-lsp";
+            # args = [ "--stdio" ];
+          };
+        };
         language = [
           {
             name = "html";
+            file-types = [
+              "html"
+              "templ"
+            ];
             auto-format = true;
+            language-servers = [
+              "vscode-html-language-server"
+              # "htmx-lsp"
+            ];
           }
           {
             name = "javascript";
             auto-format = true;
           }
+          # {
+          #   name = "jinja";
+          #   auto-format = true;
+          #   language-servers = [ "vscode-html-language-server" ];
+          # }
         ];
       };
     };
@@ -260,14 +294,12 @@
 
   yaml = {
     programs.helix = {
-      extraPackages = with unstable; [
-        yaml-language-server
-      ];
+      extraPackages = with unstable; [ yaml-language-server ];
       languages = {
         language-server = {
           yaml-language-server = {
             command = "yaml-language-server";
-            args = ["--stdio"];
+            args = [ "--stdio" ];
             config = {
               yaml = {
                 keyOrdering = true;
@@ -281,7 +313,7 @@
         language = [
           {
             name = "yaml";
-            language-servers = ["yaml-language-server"];
+            language-servers = [ "yaml-language-server" ];
             indent = {
               tab-width = 2;
               unit = " ";
@@ -290,7 +322,7 @@
         ];
       };
     };
-    xdg.desktopEntries.helix.mimeType = ["application/yaml"];
+    xdg.desktopEntries.helix.mimeType = [ "application/yaml" ];
   };
 
   sql = {
@@ -309,10 +341,11 @@
         language = [
           {
             name = "sql";
-            file-types = ["sql" "pgsql"];
-            language-servers = [
-              "postgres_lsp"
+            file-types = [
+              "sql"
+              "pgsql"
             ];
+            language-servers = [ "postgres_lsp" ];
             formatter.command = "pg_format";
             # auto-format = true;
             # formatter = {
@@ -323,40 +356,40 @@
         ];
       };
     };
-    xdg.desktopEntries.helix.mimeType = ["application/sql"];
+    xdg.desktopEntries.helix.mimeType = [ "application/sql" ];
   };
 
   markdown = {
-    programs.helix.extraPackages = with unstable; [marksman];
-    xdg.desktopEntries.helix.mimeType = ["text/markdown"];
+    programs.helix.extraPackages = with unstable; [ marksman ];
+    xdg.desktopEntries.helix.mimeType = [ "text/markdown" ];
   };
 in
-  lib.mkMerge [
-    general
-    nix
-    elm
-    python
-    go
-    idris2
-    web
-    yaml
-    sql
-    markdown
-    # miscellaneous
-    {
-      programs.helix = {
-        extraPackages = with pkgs; [
-          taplo # TOML
+lib.mkMerge [
+  general
+  nix
+  elm
+  python
+  go
+  idris2
+  web
+  yaml
+  sql
+  markdown
+  # miscellaneous
+  {
+    programs.helix = {
+      extraPackages = with pkgs; [
+        taplo # TOML
+      ];
+      languages = {
+        language-server = { };
+        language = [
+          {
+            name = "c";
+            auto-format = true;
+          }
         ];
-        languages = {
-          language-server = {};
-          language = [
-            {
-              name = "c";
-              auto-format = true;
-            }
-          ];
-        };
       };
-    }
-  ]
+    };
+  }
+]

@@ -5,9 +5,11 @@
   pkgs,
   lib,
   ...
-}: let
+}:
+let
   cfg = config.custom.nnn;
-in {
+in
+{
   options.custom.nnn = {
     enable = lib.mkEnableOption "nnn file manager";
   };
@@ -45,7 +47,7 @@ in {
         glow
         elinks
       ];
-      package = pkgs.nnn.override {withNerdIcons = true;};
+      package = pkgs.nnn.override { withNerdIcons = true; };
       plugins = {
         mappings = {
           d = "dragdrop";
@@ -63,9 +65,7 @@ in {
           + "/plugins";
       };
     };
-    programs.bash = lib.mkIf config.programs.bash.enable {
-      bashrcExtra = builtins.readFile ./.bashrc;
-    };
+    programs.bash = lib.mkIf config.programs.bash.enable { bashrcExtra = builtins.readFile ./.bashrc; };
     home.sessionVariables = {
       NNN_FIFO = "/tmp/nnn.fifo";
     };
